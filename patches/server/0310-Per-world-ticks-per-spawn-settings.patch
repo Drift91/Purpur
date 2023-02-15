@@ -1,0 +1,48 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: Jake Potrebic <jake.m.potrebic@gmail.com>
+Date: Sat, 13 Nov 2021 12:36:26 -0800
+Subject: [PATCH] Per world ticks per spawn settings
+
+
+diff --git a/src/main/java/io/papermc/paper/configuration/WorldConfiguration.java b/src/main/java/io/papermc/paper/configuration/WorldConfiguration.java
+index 4532f3a0d74feae0a1249b53e1bfbc18a8808b32..1839a447adc5bbc26a213fcba718a49b07c18fb0 100644
+--- a/src/main/java/io/papermc/paper/configuration/WorldConfiguration.java
++++ b/src/main/java/io/papermc/paper/configuration/WorldConfiguration.java
+@@ -134,6 +134,8 @@ public class WorldConfiguration extends ConfigurationPart {
+             public Reference2IntMap<MobCategory> spawnLimits = Util.make(new Reference2IntOpenHashMap<>(NaturalSpawner.SPAWNING_CATEGORIES.length), map -> Arrays.stream(NaturalSpawner.SPAWNING_CATEGORIES).forEach(mobCategory -> map.put(mobCategory, -1)));
+             @MergeMap
+             public Map<MobCategory, DespawnRange> despawnRanges = Arrays.stream(MobCategory.values()).collect(Collectors.toMap(Function.identity(), category -> new DespawnRange(category.getNoDespawnDistance(), category.getDespawnDistance())));
++            @MergeMap
++            public Reference2IntMap<MobCategory> ticksPerSpawn = Util.make(new Reference2IntOpenHashMap<>(NaturalSpawner.SPAWNING_CATEGORIES.length), map -> Arrays.stream(NaturalSpawner.SPAWNING_CATEGORIES).forEach(mobCategory -> map.put(mobCategory, -1)));
+ 
+             @ConfigSerializable
+             public record DespawnRange(@Required int soft, @Required int hard) {
+diff --git a/src/main/java/net/minecraft/world/level/Level.java b/src/main/java/net/minecraft/world/level/Level.java
+index a9289072b048095330ea32d7c965e8dda61a36fc..bced8ae237c9378795b72de16e448aa6afe3aea7 100644
+--- a/src/main/java/net/minecraft/world/level/Level.java
++++ b/src/main/java/net/minecraft/world/level/Level.java
+@@ -312,6 +312,15 @@ public abstract class Level implements LevelAccessor, AutoCloseable {
+         return this.getNearestPlayer(null, d0, d1, d2, d3, predicate);
+     }
+     // Paper end - optimise checkDespawn
++    // Paper start - per world ticks per spawn
++    private int getTicksPerSpawn(SpawnCategory spawnCategory) {
++        final int perWorld = this.paperConfig().entities.spawning.ticksPerSpawn.getInt(CraftSpawnCategory.toNMS(spawnCategory));
++        if (perWorld >= 0) {
++            return perWorld;
++        }
++        return this.getCraftServer().getTicksPerSpawns(spawnCategory);
++    }
++    // Paper end
+ 
+     public abstract ResourceKey<LevelStem> getTypeKey();
+ 
+@@ -337,7 +346,7 @@ public abstract class Level implements LevelAccessor, AutoCloseable {
+         // CraftBukkit Ticks things
+         for (SpawnCategory spawnCategory : SpawnCategory.values()) {
+             if (CraftSpawnCategory.isValidForLimits(spawnCategory)) {
+-                this.ticksPerSpawnCategory.put(spawnCategory, (long) this.getCraftServer().getTicksPerSpawns(spawnCategory));
++                this.ticksPerSpawnCategory.put(spawnCategory, this.getTicksPerSpawn(spawnCategory)); // Paper
+             }
+         }
+ 
