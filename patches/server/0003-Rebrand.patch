@@ -5,7 +5,7 @@ Subject: [PATCH] Rebrand
 
 
 diff --git a/build.gradle.kts b/build.gradle.kts
-index d9ace6cd8e9cbf088e6664469fb94df0c964998f..f25c0557cf984b97e0ab361f579eccbf46f82170 100644
+index 8d8c5a8bd2a53ac6d9b36e0330a7be6725aa407c..0435c1eb5c1fa6f9180ee8dc36a61afbac0f952e 100644
 --- a/build.gradle.kts
 +++ b/build.gradle.kts
 @@ -7,9 +7,9 @@ plugins {
@@ -20,17 +20,18 @@ index d9ace6cd8e9cbf088e6664469fb94df0c964998f..f25c0557cf984b97e0ab361f579eccbf
          exclude("io.papermc.paper", "paper-api")
      }
      // Pufferfish end
-@@ -42,6 +42,9 @@ dependencies {
+@@ -42,6 +42,10 @@ dependencies {
      runtimeOnly("mysql:mysql-connector-java:8.0.29")
      runtimeOnly("com.lmax:disruptor:3.4.4") // Paper
  
-+    implementation("cat.inspiracio:rhino-js-engine:1.7.7.1") // Purpur
++    implementation("org.mozilla:rhino-runtime:1.7.14") // Purpur
++    implementation("org.mozilla:rhino-engine:1.7.14") // Purpur
 +    implementation("dev.omega24:upnp4j:1.0") // Purpur
 +
      runtimeOnly("org.apache.maven:maven-resolver-provider:3.8.5")
      runtimeOnly("org.apache.maven.resolver:maven-resolver-connector-basic:1.7.3")
      runtimeOnly("org.apache.maven.resolver:maven-resolver-transport-http:1.7.3")
-@@ -81,7 +84,7 @@ tasks.jar {
+@@ -81,7 +85,7 @@ tasks.jar {
          attributes(
              "Main-Class" to "org.bukkit.craftbukkit.Main",
              "Implementation-Title" to "CraftBukkit",
@@ -39,7 +40,7 @@ index d9ace6cd8e9cbf088e6664469fb94df0c964998f..f25c0557cf984b97e0ab361f579eccbf
              "Implementation-Vendor" to date, // Paper
              "Specification-Title" to "Bukkit",
              "Specification-Version" to project.version,
-@@ -153,7 +156,7 @@ fun TaskContainer.registerRunTask(
+@@ -153,7 +157,7 @@ fun TaskContainer.registerRunTask(
      name: String,
      block: JavaExec.() -> Unit
  ): TaskProvider<JavaExec> = register<JavaExec>(name) {
@@ -171,7 +172,7 @@ index abe37c7c3c6f5ab73afd738ec78f06d7e4d2ed96..b5b6657e52e4f7a630229bd3ba433438
          stringbuilder.append(CrashReport.getErrorComment());
          stringbuilder.append("\n\n");
 diff --git a/src/main/java/net/minecraft/server/MinecraftServer.java b/src/main/java/net/minecraft/server/MinecraftServer.java
-index 68d16efaf9c2d997afabadcf1ee24c5de685b5b3..861cd9f092a19aca520c2be4ba7a6ee3d9aee263 100644
+index 33a5e900c2cab99c311fa5f5b71a609cf8f802cb..51163298e6ce111bdb19d55ce367cd69c7fe5f89 100644
 --- a/src/main/java/net/minecraft/server/MinecraftServer.java
 +++ b/src/main/java/net/minecraft/server/MinecraftServer.java
 @@ -924,7 +924,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
@@ -193,7 +194,7 @@ index 68d16efaf9c2d997afabadcf1ee24c5de685b5b3..861cd9f092a19aca520c2be4ba7a6ee3
  
      public SystemReport fillSystemReport(SystemReport details) {
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftServer.java b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-index c7fc5fcd28812fdc758842b06a6781b2c0e4f3cb..22c9cbb8f0d43650a8d021fac8b9efae4478c9e6 100644
+index 7ddf52de4b095f63c75b696008fcdde6345fc3c8..9d15cb8151a4008061c5788cbf4f4fa494cfe49d 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
 @@ -261,7 +261,7 @@ import javax.annotation.Nullable; // Paper
@@ -259,10 +260,10 @@ index cdefb2025eedea7e204d70d568adaf1c1ec4c03c..d1526ed7197b883e1d1f07baf285bf5e
                  // (async tasks must live with race-conditions if they attempt to cancel between these few lines of code)
              }
 diff --git a/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java b/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java
-index 74fb5a9ae82ace67f7ced202b81bbe864f59308a..1395609e4656c4b6a1ca17f34eba1398c0927ee6 100644
+index 0ccde7fe2a852f7da72f0b3f5a53cb48d28d1840..2d53d30d603a4627ad96dfff659ad04012aaf7f9 100644
 --- a/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java
 +++ b/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java
-@@ -457,7 +457,7 @@ public final class CraftMagicNumbers implements UnsafeValues {
+@@ -464,7 +464,7 @@ public final class CraftMagicNumbers implements UnsafeValues {
  
      @Override
      public com.destroystokyo.paper.util.VersionFetcher getVersionFetcher() {

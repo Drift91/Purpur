@@ -1,8 +1,8 @@
 plugins {
     java
     `maven-publish`
-    id("com.github.johnrengelman.shadow") version "7.1.2" apply false
-    id("io.papermc.paperweight.patcher") version "1.4.1"
+    id("com.github.johnrengelman.shadow") version "8.1.0" apply false
+    id("io.papermc.paperweight.patcher") version "1.5.2"
 }
 
 allprojects {
@@ -29,10 +29,6 @@ subprojects {
     tasks.withType<ProcessResources> {
         filteringCharset = Charsets.UTF_8.name()
     }
-    tasks.withType<Test> {
-        minHeapSize = "2g"
-        maxHeapSize = "2g"
-    }
 
     repositories {
         mavenCentral()
@@ -52,7 +48,7 @@ repositories {
 
 dependencies {
     remapper("net.fabricmc:tiny-remapper:0.8.6:fat")
-    decompiler("net.minecraftforge:forgeflower:2.0.605.1")
+    decompiler("net.minecraftforge:forgeflower:2.0.627.2")
     paperclip("io.papermc:paperclip:3.0.2")
 }
 

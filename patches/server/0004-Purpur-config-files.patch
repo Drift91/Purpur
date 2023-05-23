@@ -5,7 +5,7 @@ Subject: [PATCH] Purpur config files
 
 
 diff --git a/src/main/java/com/destroystokyo/paper/Metrics.java b/src/main/java/com/destroystokyo/paper/Metrics.java
-index 061716934ba0a1f01e4d85d664034f72b3c7a765..9713263c3bd34ab8a3bfc0a8797ba0b1b88ed733 100644
+index 692c962193cf9fcc6801fc93f3220bdc673d527b..9713263c3bd34ab8a3bfc0a8797ba0b1b88ed733 100644
 --- a/src/main/java/com/destroystokyo/paper/Metrics.java
 +++ b/src/main/java/com/destroystokyo/paper/Metrics.java
 @@ -593,7 +593,7 @@ public class Metrics {
@@ -17,19 +17,27 @@ index 061716934ba0a1f01e4d85d664034f72b3c7a765..9713263c3bd34ab8a3bfc0a8797ba0b1
  
                  metrics.addCustomChart(new Metrics.SimplePie("minecraft_version", () -> {
                      String minecraftVersion = Bukkit.getVersion();
-@@ -602,8 +602,8 @@ public class Metrics {
+@@ -602,16 +602,8 @@ public class Metrics {
                  }));
  
                  metrics.addCustomChart(new Metrics.SingleLineChart("players", () -> Bukkit.getOnlinePlayers().size()));
 -                metrics.addCustomChart(new Metrics.SimplePie("online_mode", () -> Bukkit.getOnlineMode() ? "online" : "offline"));
--                metrics.addCustomChart(new Metrics.SimplePie("pufferfish_version", () -> (Metrics.class.getPackage().getImplementationVersion() != null) ? Metrics.class.getPackage().getImplementationVersion() : "unknown"));
+-                final String paperVersion;
+-                final String implVersion = org.bukkit.craftbukkit.Main.class.getPackage().getImplementationVersion();
+-                if (implVersion != null) {
+-                    final String buildOrHash = implVersion.substring(implVersion.lastIndexOf('-') + 1);
+-                    paperVersion = "git-Pufferfish-%s-%s".formatted(Bukkit.getServer().getMinecraftVersion(), buildOrHash); // Pufferfish
+-                } else {
+-                    paperVersion = "unknown";
+-                }
+-                metrics.addCustomChart(new Metrics.SimplePie("pufferfish_version", () -> paperVersion)); // Pufferfish
 +                metrics.addCustomChart(new Metrics.SimplePie("online_mode", () -> Bukkit.getOnlineMode() ? "online" : (io.papermc.paper.configuration.GlobalConfiguration.get().proxies.isProxyOnlineMode() ? "bungee" : "offline"))); // Purpur
 +                metrics.addCustomChart(new Metrics.SimplePie("purpur_version", () -> (org.bukkit.craftbukkit.Main.class.getPackage().getImplementationVersion() != null) ? org.bukkit.craftbukkit.Main.class.getPackage().getImplementationVersion() : "unknown")); // Purpur
  
                  metrics.addCustomChart(new Metrics.DrilldownPie("java_version", () -> {
                      Map<String, Map<String, Integer>> map = new HashMap<>();
 diff --git a/src/main/java/net/minecraft/commands/CommandSourceStack.java b/src/main/java/net/minecraft/commands/CommandSourceStack.java
-index ae5dd08de75a7ed231295f306fd0974da3988249..b8d49f7607c646216d42f4e047997d47b49f228f 100644
+index 7b6b51392b123d34382233adcf4c3d4867bdaa32..ccc78857b51e25640ec1e4dcfe4c76a06d1bbff4 100644
 --- a/src/main/java/net/minecraft/commands/CommandSourceStack.java
 +++ b/src/main/java/net/minecraft/commands/CommandSourceStack.java
 @@ -317,6 +317,30 @@ public class CommandSourceStack implements SharedSuggestionProvider, com.destroy
@@ -84,7 +92,7 @@ index ad4fdbdcf09f30d10e61ccf47f8fb9ce6bd92e73..ca6a2fee12ac8a89dae57aa2787462f1
          io.papermc.paper.brigadier.PaperBrigadierProviderImpl.INSTANCE.getClass(); // init PaperBrigadierProvider
          // Paper end
 diff --git a/src/main/java/net/minecraft/world/level/Level.java b/src/main/java/net/minecraft/world/level/Level.java
-index 42299fd6ae663b01bb5f010b96887caa744dcb96..816f906f98adc180f37d2b216628e576ac837448 100644
+index e5f6740dfe7abb77ee3a4af9c2b53a014819c7e1..a8fe157c54b758db73639b21d7ef0fd646034af6 100644
 --- a/src/main/java/net/minecraft/world/level/Level.java
 +++ b/src/main/java/net/minecraft/world/level/Level.java
 @@ -173,6 +173,8 @@ public abstract class Level implements LevelAccessor, AutoCloseable {
@@ -105,10 +113,10 @@ index 42299fd6ae663b01bb5f010b96887caa744dcb96..816f906f98adc180f37d2b216628e576
          this.world = new CraftWorld((ServerLevel) this, gen, biomeProvider, env);
  
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftServer.java b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-index 22c9cbb8f0d43650a8d021fac8b9efae4478c9e6..37b4f6ec19ef2c847214e127c258e1b82b4c2c1d 100644
+index 9d15cb8151a4008061c5788cbf4f4fa494cfe49d..fdb314838159f77b3fb12d61e74d12f582fb2bcf 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-@@ -980,6 +980,7 @@ public final class CraftServer implements Server {
+@@ -961,6 +961,7 @@ public final class CraftServer implements Server {
  
          org.spigotmc.SpigotConfig.init((File) console.options.valueOf("spigot-settings")); // Spigot
          this.console.paperConfigurations.reloadConfigs(this.console);
@@ -116,7 +124,7 @@ index 22c9cbb8f0d43650a8d021fac8b9efae4478c9e6..37b4f6ec19ef2c847214e127c258e1b8
          for (ServerLevel world : this.console.getAllLevels()) {
              // world.serverLevelData.setDifficulty(config.difficulty); // Paper - per level difficulty
              world.setSpawnSettings(world.serverLevelData.getDifficulty() != Difficulty.PEACEFUL && config.spawnMonsters, config.spawnAnimals); // Paper - per level difficulty (from MinecraftServer#setDifficulty(ServerLevel, Difficulty, boolean))
-@@ -995,6 +996,7 @@ public final class CraftServer implements Server {
+@@ -976,6 +977,7 @@ public final class CraftServer implements Server {
                  }
              }
              world.spigotConfig.init(); // Spigot
@@ -124,7 +132,7 @@ index 22c9cbb8f0d43650a8d021fac8b9efae4478c9e6..37b4f6ec19ef2c847214e127c258e1b8
          }
  
          Plugin[] pluginClone = pluginManager.getPlugins().clone(); // Paper
-@@ -1010,6 +1012,7 @@ public final class CraftServer implements Server {
+@@ -991,6 +993,7 @@ public final class CraftServer implements Server {
          this.reloadData();
          org.spigotmc.SpigotConfig.registerCommands(); // Spigot
          io.papermc.paper.command.PaperCommands.registerCommands(this.console); // Paper
@@ -132,7 +140,7 @@ index 22c9cbb8f0d43650a8d021fac8b9efae4478c9e6..37b4f6ec19ef2c847214e127c258e1b8
          this.overrideAllCommandBlockCommands = this.commandsConfiguration.getStringList("command-block-overrides").contains("*");
          this.ignoreVanillaPermissions = this.commandsConfiguration.getBoolean("ignore-vanilla-permissions");
  
-@@ -2769,6 +2772,18 @@ public final class CraftServer implements Server {
+@@ -2751,6 +2754,18 @@ public final class CraftServer implements Server {
              return CraftServer.this.console.paperConfigurations.createLegacyObject(CraftServer.this.console);
          }
  
@@ -152,7 +160,7 @@ index 22c9cbb8f0d43650a8d021fac8b9efae4478c9e6..37b4f6ec19ef2c847214e127c258e1b8
          public void restart() {
              org.spigotmc.RestartCommand.restart();
 diff --git a/src/main/java/org/bukkit/craftbukkit/Main.java b/src/main/java/org/bukkit/craftbukkit/Main.java
-index 190e17eb28d166aedee06e9578561ba402d1b6d2..0864daf66deee41261e3ec69eeae7bb72822e60b 100644
+index f30621be24c6c3a4f173436fce1ad1c13507c84f..e859f1078a42de196a69818a34a8b2c24958c717 100644
 --- a/src/main/java/org/bukkit/craftbukkit/Main.java
 +++ b/src/main/java/org/bukkit/craftbukkit/Main.java
 @@ -166,6 +166,14 @@ public class Main {

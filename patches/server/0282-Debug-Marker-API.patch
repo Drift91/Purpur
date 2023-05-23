@@ -5,10 +5,10 @@ Subject: [PATCH] Debug Marker API
 
 
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftServer.java b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-index 97f357a6c8d600daf68b249e04da1f7008b14302..72d9726ac8d06502f6123aea039e026ad6529661 100644
+index ad29585f35a407afb3c383f5006ed9eacfb53c72..a3db3b591dc75e9e904e395d56b9c6cf03b5dafe 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-@@ -1502,6 +1502,42 @@ public final class CraftServer implements Server {
+@@ -1447,6 +1447,42 @@ public final class CraftServer implements Server {
      public void removeFuel(org.bukkit.Material material) {
          net.minecraft.world.level.block.entity.AbstractFurnaceBlockEntity.removeFuel(net.minecraft.world.item.ItemStack.fromBukkitCopy(new ItemStack(material)));
      }
@@ -52,7 +52,7 @@ index 97f357a6c8d600daf68b249e04da1f7008b14302..72d9726ac8d06502f6123aea039e026a
  
      @Override
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftWorld.java b/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
-index ba570a518f2bcdb23fd2118663c2b82e7484629d..9b5323edd99848b73ea0e34230e7bec8dc23be8c 100644
+index 331646e5be8c626d75738cb05742d31e909efb8f..6a327616cd590b70170f8441c003a2109640201d 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftWorld.java
 @@ -2257,6 +2257,42 @@ public class CraftWorld extends CraftRegionAccessor implements World {
@@ -99,10 +99,10 @@ index ba570a518f2bcdb23fd2118663c2b82e7484629d..9b5323edd99848b73ea0e34230e7bec8
  
      @Override
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-index ddf2c679ada43bfb209656dbcaca0fa8aef8ed24..660a2a8d17325014cc3f8ba33faaadc6fb5b80eb 100644
+index 40fe24de4a7bd49f47bb76ad1a25aa7f3c4cbfd9..3ea9dab2d6ed04d43d5ab7c5dc428434c47dbea1 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-@@ -3125,5 +3125,48 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
+@@ -3148,5 +3148,48 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
      public void setSpawnInvulnerableTicks(int spawnInvulnerableTime) {
          getHandle().spawnInvulnerableTime = spawnInvulnerableTime;
      }

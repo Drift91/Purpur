@@ -5,10 +5,10 @@ Subject: [PATCH] Add death screen API
 
 
 diff --git a/src/main/java/org/bukkit/entity/Player.java b/src/main/java/org/bukkit/entity/Player.java
-index 9464ec6b436b79f015f50279aed2ed38e32d5909..d5ad02c1fa2b840289d316400952aaebb8c5dad1 100644
+index 53b42a10af51865d45b211a13ab1780604ce43ec..9c03265a9e932b3c9b5f0f7ffb4c9e9094f813ec 100644
 --- a/src/main/java/org/bukkit/entity/Player.java
 +++ b/src/main/java/org/bukkit/entity/Player.java
-@@ -3118,5 +3118,21 @@ public interface Player extends HumanEntity, Conversable, OfflinePlayer, PluginM
+@@ -3087,5 +3087,21 @@ public interface Player extends HumanEntity, Conversable, OfflinePlayer, PluginM
       * Clears all debug block highlights
       */
      void clearBlockHighlights();
@@ -18,7 +18,7 @@ index 9464ec6b436b79f015f50279aed2ed38e32d5909..d5ad02c1fa2b840289d316400952aaeb
 +     *
 +     * @param message The death message to show the player
 +     */
-+    void sendDeathScreen(@NotNull Component message);
++    void sendDeathScreen(@NotNull net.kyori.adventure.text.Component message);
 +
 +    /**
 +     * Sends a player the death screen with a specified death message,
@@ -27,6 +27,6 @@ index 9464ec6b436b79f015f50279aed2ed38e32d5909..d5ad02c1fa2b840289d316400952aaeb
 +     * @param message The death message to show the player
 +     * @param killer The entity that killed the player
 +     */
-+    void sendDeathScreen(@NotNull Component message, @Nullable Entity killer);
++    void sendDeathScreen(@NotNull net.kyori.adventure.text.Component message, @Nullable Entity killer);
      // Purpur end
  }
