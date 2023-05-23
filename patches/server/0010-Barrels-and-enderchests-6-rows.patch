@@ -5,10 +5,10 @@ Subject: [PATCH] Barrels and enderchests 6 rows
 
 
 diff --git a/src/main/java/net/minecraft/server/players/PlayerList.java b/src/main/java/net/minecraft/server/players/PlayerList.java
-index 83b080cfd15b03878acca503f0f416166fbc4e5c..168abc1f0c795bf840ca87b301dfa85ac0b5dd16 100644
+index 0e75163468ab91e7c6d245577041c288a9d865ac..7387bc99cd4d5172ef93364608a9ba178cc3597c 100644
 --- a/src/main/java/net/minecraft/server/players/PlayerList.java
 +++ b/src/main/java/net/minecraft/server/players/PlayerList.java
-@@ -1138,6 +1138,27 @@ public abstract class PlayerList {
+@@ -1154,6 +1154,27 @@ public abstract class PlayerList {
          player.getBukkitEntity().recalculatePermissions(); // CraftBukkit
          this.server.getCommands().sendCommands(player);
          } // Paper
@@ -37,10 +37,10 @@ index 83b080cfd15b03878acca503f0f416166fbc4e5c..168abc1f0c795bf840ca87b301dfa85a
  
      public boolean isWhiteListed(GameProfile profile) {
 diff --git a/src/main/java/net/minecraft/world/entity/player/Player.java b/src/main/java/net/minecraft/world/entity/player/Player.java
-index e0f3375653db94d5fd2e154b72cae3d2113aaab1..aa41679dec3c87c5af8721c710adcad7cdd65f8b 100644
+index ffcc81c07b5aa45d1471e05676f43e96db13b045..5cc0b0754feb9a78b8a71e0cb22d2a29243ba3d2 100644
 --- a/src/main/java/net/minecraft/world/entity/player/Player.java
 +++ b/src/main/java/net/minecraft/world/entity/player/Player.java
-@@ -183,6 +183,7 @@ public abstract class Player extends LivingEntity {
+@@ -186,6 +186,7 @@ public abstract class Player extends LivingEntity {
      public boolean affectsSpawning = true;
      public net.kyori.adventure.util.TriState flyingFallDamage = net.kyori.adventure.util.TriState.NOT_SET;
      // Paper end
@@ -49,7 +49,7 @@ index e0f3375653db94d5fd2e154b72cae3d2113aaab1..aa41679dec3c87c5af8721c710adcad7
      // CraftBukkit start
      public boolean fauxSleeping;
 diff --git a/src/main/java/net/minecraft/world/inventory/ChestMenu.java b/src/main/java/net/minecraft/world/inventory/ChestMenu.java
-index 82331715e91c6e9a13c0626164368ae16e754126..15d115917e2c9f7d5669cabe2721df9fcdb4ec7b 100644
+index 0dbfd23bbfc6ad203f048142f8c90ef741849fe1..9a80427d2bb470b6b1638e59aba57216676dcbd2 100644
 --- a/src/main/java/net/minecraft/world/inventory/ChestMenu.java
 +++ b/src/main/java/net/minecraft/world/inventory/ChestMenu.java
 @@ -67,10 +67,30 @@ public class ChestMenu extends AbstractContainerMenu {
@@ -84,10 +84,10 @@ index 82331715e91c6e9a13c0626164368ae16e754126..15d115917e2c9f7d5669cabe2721df9f
          return new ChestMenu(MenuType.GENERIC_9x6, syncId, playerInventory, inventory, 6);
      }
 diff --git a/src/main/java/net/minecraft/world/inventory/PlayerEnderChestContainer.java b/src/main/java/net/minecraft/world/inventory/PlayerEnderChestContainer.java
-index 59acb1aab21e2dce0f046942f124b50ac1cb8d0f..5058b30994fe38d8db2336267121476eaf4f1ff6 100644
+index 4703f23316f82a1a942907b46d2d6dcb7d70ec37..162798f57a05b78121fa6c4fadf5adee80fbe221 100644
 --- a/src/main/java/net/minecraft/world/inventory/PlayerEnderChestContainer.java
 +++ b/src/main/java/net/minecraft/world/inventory/PlayerEnderChestContainer.java
-@@ -29,11 +29,18 @@ public class PlayerEnderChestContainer extends SimpleContainer {
+@@ -30,11 +30,18 @@ public class PlayerEnderChestContainer extends SimpleContainer {
      }
  
      public PlayerEnderChestContainer(Player owner) {
@@ -198,10 +198,10 @@ index 416aa989ebb18a8741cc9d605a1180ab830f6643..e38a0adf5463c48311ad08b8d2e5b5c2
  
      @Override
 diff --git a/src/main/java/org/bukkit/craftbukkit/inventory/CraftContainer.java b/src/main/java/org/bukkit/craftbukkit/inventory/CraftContainer.java
-index 1f73834043c2d2be17ae647589653d517db36a1b..39f03d0b74b9bfc2eb62d95f2975bcd15bb25bc2 100644
+index 04088918e172eecb8d53b0e6de9be0071ccf33b5..eddd6073e0feb7b046db1d169020ca067fdf689c 100644
 --- a/src/main/java/org/bukkit/craftbukkit/inventory/CraftContainer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/inventory/CraftContainer.java
-@@ -164,8 +164,19 @@ public class CraftContainer extends AbstractContainerMenu {
+@@ -182,8 +182,19 @@ public class CraftContainer extends AbstractContainerMenu {
              case PLAYER:
              case CHEST:
              case ENDER_CHEST:
@@ -223,10 +223,10 @@ index 1f73834043c2d2be17ae647589653d517db36a1b..39f03d0b74b9bfc2eb62d95f2975bcd1
              case DISPENSER:
              case DROPPER:
 diff --git a/src/main/java/org/bukkit/craftbukkit/inventory/CraftInventory.java b/src/main/java/org/bukkit/craftbukkit/inventory/CraftInventory.java
-index 59457378820d7f2899254a6aeef4c30c926ce543..b280d42a0298c04647945cde7bd5a4f5766c301b 100644
+index 092f6843e3b43d4c615d2eee344f5966e96ae850..cb0c851ab5fcf676da2397040835a94d4bdb4be1 100644
 --- a/src/main/java/org/bukkit/craftbukkit/inventory/CraftInventory.java
 +++ b/src/main/java/org/bukkit/craftbukkit/inventory/CraftInventory.java
-@@ -82,7 +82,7 @@ public class CraftInventory implements Inventory {
+@@ -83,7 +83,7 @@ public class CraftInventory implements Inventory {
  
      @Override
      public void setContents(ItemStack[] items) {
@@ -236,7 +236,7 @@ index 59457378820d7f2899254a6aeef4c30c926ce543..b280d42a0298c04647945cde7bd5a4f5
          }
  
 diff --git a/src/main/java/org/purpurmc/purpur/PurpurConfig.java b/src/main/java/org/purpurmc/purpur/PurpurConfig.java
-index b0344a0baa22c4312ac9d1049b14671d932f76e2..2f684a8f976f1f1a18c31f4c1a7eba9080099e55 100644
+index 943b65dd5169946d5fec86e3fc38076cae47ba58..6b0e6f3c93092dcabe53048a9260941c095ef996 100644
 --- a/src/main/java/org/purpurmc/purpur/PurpurConfig.java
 +++ b/src/main/java/org/purpurmc/purpur/PurpurConfig.java
 @@ -177,4 +177,39 @@ public class PurpurConfig {

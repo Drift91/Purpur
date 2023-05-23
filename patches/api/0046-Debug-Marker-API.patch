@@ -1,0 +1,341 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: YouHaveTrouble <youhavetrouble@youhavetrouble.me>
+Date: Sat, 23 Jul 2022 14:40:17 +0200
+Subject: [PATCH] Debug Marker API
+
+
+diff --git a/src/main/java/org/bukkit/Bukkit.java b/src/main/java/org/bukkit/Bukkit.java
+index 72e8e8ff651cf254e0fe3a8927272ea8da0f5f5a..74731f0d64d3bfc61baf816516b2bcef6515213e 100644
+--- a/src/main/java/org/bukkit/Bukkit.java
++++ b/src/main/java/org/bukkit/Bukkit.java
+@@ -2498,5 +2498,89 @@ public final class Bukkit {
+     public static void removeFuel(@NotNull Material material) {
+         server.removeFuel(material);
+     }
++
++    /**
++     * Creates debug block highlight on specified block location and show it to all players on the server.
++     * <p>
++     * Clients may be inconsistent in displaying it.
++     * @param location Location to highlight
++     * @param duration Duration for highlight to show in milliseconds
++     */
++    public static void sendBlockHighlight(@NotNull Location location, int duration) {
++        server.sendBlockHighlight(location, duration);
++    }
++
++    /**
++     * Creates debug block highlight on specified block location and show it to all players on the server.
++     * <p>
++     * Clients may be inconsistent in displaying it.
++     * @param location Location to highlight
++     * @param duration Duration for highlight to show in milliseconds
++     * @param argb Color of the highlight. ARGB int. Will be ignored on some versions of vanilla client
++     */
++    public static void sendBlockHighlight(@NotNull Location location, int duration, int argb) {
++        server.sendBlockHighlight(location, duration, argb);
++    }
++
++    /**
++     * Creates debug block highlight on specified block location and show it to all players on the server.
++     * <p>
++     * Clients may be inconsistent in displaying it.
++     * @param location Location to highlight
++     * @param duration Duration for highlight to show in milliseconds
++     * @param text Text to show above the highlight
++     */
++    public static void sendBlockHighlight(@NotNull Location location, int duration, @NotNull String text) {
++        server.sendBlockHighlight(location, duration, text);
++    }
++
++    /**
++     * Creates debug block highlight on specified block location and show it to all players on the server.
++     * <p>
++     * Clients may be inconsistent in displaying it.
++     * @param location Location to highlight
++     * @param duration Duration for highlight to show in milliseconds
++     * @param text Text to show above the highlight
++     * @param argb Color of the highlight. ARGB int. Will be ignored on some versions of vanilla client
++     */
++    public static void sendBlockHighlight(@NotNull Location location, int duration, @NotNull String text, int argb) {
++        server.sendBlockHighlight(location, duration, text, argb);
++    }
++
++    /**
++     * Creates debug block highlight on specified block location and show it to all players on the server.
++     * <p>
++     * Clients may be inconsistent in displaying it.
++     * @param location Location to highlight
++     * @param duration Duration for highlight to show in milliseconds
++     * @param color Color of the highlight. Will be ignored on some versions of vanilla client
++     * @param transparency Transparency of the highlight
++     * @throws IllegalArgumentException If transparency is outside 0-255 range
++     */
++    public static void sendBlockHighlight(@NotNull Location location, int duration, @NotNull org.bukkit.Color color, int transparency) {
++        server.sendBlockHighlight(location, duration, color, transparency);
++    }
++
++    /**
++     * Creates debug block highlight on specified block location and show it to all players on the server.
++     * <p>
++     * Clients may be inconsistent in displaying it.
++     * @param location Location to highlight
++     * @param duration Duration for highlight to show in milliseconds
++     * @param text Text to show above the highlight
++     * @param color Color of the highlight. Will be ignored on some versions of vanilla client
++     * @param transparency Transparency of the highlight
++     * @throws IllegalArgumentException If transparency is outside 0-255 range
++     */
++    public static void sendBlockHighlight(@NotNull Location location, int duration, @NotNull String text, @NotNull org.bukkit.Color color, int transparency) {
++        server.sendBlockHighlight(location, duration, text, color, transparency);
++    }
++
++    /**
++     * Clears all debug block highlights for all players on the server.
++     */
++    public static void clearBlockHighlights() {
++        server.clearBlockHighlights();
++    }
+     // Purpur end
+ }
+diff --git a/src/main/java/org/bukkit/Server.java b/src/main/java/org/bukkit/Server.java
+index 8b53a9149f655870ebc1c912eeb9fecbcb4836b8..d87e4d177b60957eee198c3f1791dbf26dbdddd6 100644
+--- a/src/main/java/org/bukkit/Server.java
++++ b/src/main/java/org/bukkit/Server.java
+@@ -2177,5 +2177,75 @@ public interface Server extends PluginMessageRecipient, net.kyori.adventure.audi
+      * @param material The material that will no longer be a fuel
+      */
+     public void removeFuel(@NotNull Material material);
++
++    /**
++     * Creates debug block highlight on specified block location and show it to all players on the server.
++     * <p>
++     * Clients may be inconsistent in displaying it.
++     * @param location Location to highlight
++     * @param duration Duration for highlight to show in milliseconds
++     */
++    void sendBlockHighlight(@NotNull Location location, int duration);
++
++    /**
++     * Creates debug block highlight on specified block location and show it to all players on the server.
++     * <p>
++     * Clients may be inconsistent in displaying it.
++     * @param location Location to highlight
++     * @param duration Duration for highlight to show in milliseconds
++     * @param argb Color of the highlight. ARGB int. Will be ignored on some versions of vanilla client
++     */
++    void sendBlockHighlight(@NotNull Location location, int duration, int argb);
++
++    /**
++     * Creates debug block highlight on specified block location and show it to all players on the server.
++     * <p>
++     * Clients may be inconsistent in displaying it.
++     * @param location Location to highlight
++     * @param duration Duration for highlight to show in milliseconds
++     * @param text Text to show above the highlight
++     */
++    void sendBlockHighlight(@NotNull Location location, int duration, @NotNull String text);
++
++    /**
++     * Creates debug block highlight on specified block location and show it to all players on the server.
++     * <p>
++     * Clients may be inconsistent in displaying it.
++     * @param location Location to highlight
++     * @param duration Duration for highlight to show in milliseconds
++     * @param text Text to show above the highlight
++     * @param argb Color of the highlight. ARGB int. Will be ignored on some versions of vanilla client
++     */
++    void sendBlockHighlight(@NotNull Location location, int duration, @NotNull String text, int argb);
++
++    /**
++     * Creates debug block highlight on specified block location and show it to all players on the server.
++     * <p>
++     * Clients may be inconsistent in displaying it.
++     * @param location Location to highlight
++     * @param duration Duration for highlight to show in milliseconds
++     * @param color Color of the highlight. Will be ignored on some versions of vanilla client
++     * @param transparency Transparency of the highlight
++     * @throws IllegalArgumentException If transparency is outside 0-255 range
++     */
++    void sendBlockHighlight(@NotNull Location location, int duration, @NotNull org.bukkit.Color color, int transparency);
++
++    /**
++     * Creates debug block highlight on specified block location and show it to all players on the server.
++     * <p>
++     * Clients may be inconsistent in displaying it.
++     * @param location Location to highlight
++     * @param duration Duration for highlight to show in milliseconds
++     * @param text Text to show above the highlight
++     * @param color Color of the highlight. Will be ignored on some versions of vanilla client
++     * @param transparency Transparency of the highlight
++     * @throws IllegalArgumentException If transparency is outside 0-255 range
++     */
++    void sendBlockHighlight(@NotNull Location location, int duration, @NotNull String text, @NotNull org.bukkit.Color color, int transparency);
++
++    /**
++     * Clears all debug block highlights for all players on the server.
++     */
++    void clearBlockHighlights();
+     // Purpur end
+ }
+diff --git a/src/main/java/org/bukkit/World.java b/src/main/java/org/bukkit/World.java
+index 9b5cd8a33bae463872efecaca0829b7d2b434529..4561ca02052d774bc1424f7044c34f7affd415fc 100644
+--- a/src/main/java/org/bukkit/World.java
++++ b/src/main/java/org/bukkit/World.java
+@@ -3981,6 +3981,76 @@ public interface World extends RegionAccessor, WorldInfo, PluginMessageRecipient
+      * @return The local difficulty
+      */
+     public float getLocalDifficultyAt(@NotNull Location location);
++
++    /**
++     * Creates debug block highlight on specified block location and show it to all players on this world.
++     * <p>
++     * Clients may be inconsistent in displaying it.
++     * @param location Location to highlight
++     * @param duration Duration for highlight to show in milliseconds
++     */
++    void sendBlockHighlight(@NotNull Location location, int duration);
++
++    /**
++     * Creates debug block highlight on specified block location and show it to all players on this world.
++     * <p>
++     * Clients may be inconsistent in displaying it.
++     * @param location Location to highlight
++     * @param duration Duration for highlight to show in milliseconds
++     * @param argb Color of the highlight. ARGB int. Will be ignored on some versions of vanilla client
++     */
++    void sendBlockHighlight(@NotNull Location location, int duration, int argb);
++
++    /**
++     * Creates debug block highlight on specified block location and show it to all players on this world.
++     * <p>
++     * Clients may be inconsistent in displaying it.
++     * @param location Location to highlight
++     * @param duration Duration for highlight to show in milliseconds
++     * @param text Text to show above the highlight
++     */
++    void sendBlockHighlight(@NotNull Location location, int duration, @NotNull String text);
++
++    /**
++     * Creates debug block highlight on specified block location and show it to all players on this world.
++     * <p>
++     * Clients may be inconsistent in displaying it.
++     * @param location Location to highlight
++     * @param duration Duration for highlight to show in milliseconds
++     * @param text Text to show above the highlight
++     * @param argb Color of the highlight. ARGB int. Will be ignored on some versions of vanilla client
++     */
++    void sendBlockHighlight(@NotNull Location location, int duration, @NotNull String text, int argb);
++
++    /**
++     * Creates debug block highlight on specified block location and show it to all players on this world.
++     * <p>
++     * Clients may be inconsistent in displaying it.
++     * @param location Location to highlight
++     * @param duration Duration for highlight to show in milliseconds
++     * @param color Color of the highlight. Will be ignored on some versions of vanilla client
++     * @param transparency Transparency of the highlight
++     * @throws IllegalArgumentException If transparency is outside 0-255 range
++     */
++    void sendBlockHighlight(@NotNull Location location, int duration, @NotNull org.bukkit.Color color, int transparency);
++
++    /**
++     * Creates debug block highlight on specified block location and show it to all players on this world.
++     * <p>
++     * Clients may be inconsistent in displaying it.
++     * @param location Location to highlight
++     * @param duration Duration for highlight to show in milliseconds
++     * @param text Text to show above the highlight
++     * @param color Color of the highlight. Will be ignored on some versions of vanilla client
++     * @param transparency Transparency of the highlight
++     * @throws IllegalArgumentException If transparency is outside 0-255 range
++     */
++    void sendBlockHighlight(@NotNull Location location, int duration, @NotNull String text, @NotNull org.bukkit.Color color, int transparency);
++
++    /**
++     * Clears all debug block highlights for all players on this world.
++     */
++    void clearBlockHighlights();
+     // Purpur end
+ 
+     /**
+diff --git a/src/main/java/org/bukkit/entity/Player.java b/src/main/java/org/bukkit/entity/Player.java
+index 13262d8a500f476a6035ee2c2f976c5f6f5a8263..c3e4635c388fcf364c65d5c1ce2ce1f701012e05 100644
+--- a/src/main/java/org/bukkit/entity/Player.java
++++ b/src/main/java/org/bukkit/entity/Player.java
+@@ -3105,5 +3105,75 @@ public interface Player extends HumanEntity, Conversable, OfflinePlayer, PluginM
+      * @param invulnerableTicks Invulnerable ticks remaining
+      */
+     void setSpawnInvulnerableTicks(int invulnerableTicks);
++
++    /**
++     * Creates debug block highlight on specified block location and show it to this player.
++     * <p>
++     * Clients may be inconsistent in displaying it.
++     * @param location Location to highlight
++     * @param duration Duration for highlight to show in milliseconds
++     */
++    void sendBlockHighlight(@NotNull Location location, int duration);
++
++    /**
++     * Creates debug block highlight on specified block location and show it to this player.
++     * <p>
++     * Clients may be inconsistent in displaying it.
++     * @param location Location to highlight
++     * @param duration Duration for highlight to show in milliseconds
++     * @param argb Color of the highlight. ARGB int. Will be ignored on some versions of vanilla client
++     */
++    void sendBlockHighlight(@NotNull Location location, int duration, int argb);
++
++    /**
++     * Creates debug block highlight on specified block location and show it to this player.
++     * <p>
++     * Clients may be inconsistent in displaying it.
++     * @param location Location to highlight
++     * @param duration Duration for highlight to show in milliseconds
++     * @param text Text to show above the highlight
++     */
++    void sendBlockHighlight(@NotNull Location location, int duration, @NotNull String text);
++
++    /**
++     * Creates debug block highlight on specified block location and show it to this player.
++     * <p>
++     * Clients may be inconsistent in displaying it.
++     * @param location Location to highlight
++     * @param duration Duration for highlight to show in milliseconds
++     * @param text Text to show above the highlight
++     * @param argb Color of the highlight. ARGB int. Will be ignored on some versions of vanilla client
++     */
++    void sendBlockHighlight(@NotNull Location location, int duration, @NotNull String text, int argb);
++
++    /**
++     * Creates debug block highlight on specified block location and show it to this player.
++     * <p>
++     * Clients may be inconsistent in displaying it.
++     * @param location Location to highlight
++     * @param duration Duration for highlight to show in milliseconds
++     * @param color Color of the highlight. Will be ignored on some versions of vanilla client
++     * @param transparency Transparency of the highlight
++     * @throws IllegalArgumentException If transparency is outside 0-255 range
++     */
++    void sendBlockHighlight(@NotNull Location location, int duration, @NotNull org.bukkit.Color color, int transparency);
++
++    /**
++     * Creates debug block highlight on specified block location and show it to this player.
++     * <p>
++     * Clients may be inconsistent in displaying it.
++     * @param location Location to highlight
++     * @param duration Duration for highlight to show in milliseconds
++     * @param text Text to show above the highlight
++     * @param color Color of the highlight. Will be ignored on some versions of vanilla client
++     * @param transparency Transparency of the highlight
++     * @throws IllegalArgumentException If transparency is outside 0-255 range
++     */
++    void sendBlockHighlight(@NotNull Location location, int duration, @NotNull String text, @NotNull org.bukkit.Color color, int transparency);
++
++    /**
++     * Clears all debug block highlights
++     */
++    void clearBlockHighlights();
+     // Purpur end
+ }

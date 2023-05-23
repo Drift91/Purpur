@@ -5,24 +5,24 @@ Subject: [PATCH] Configurable server mod name
 
 
 diff --git a/src/main/java/net/minecraft/server/MinecraftServer.java b/src/main/java/net/minecraft/server/MinecraftServer.java
-index 7191a7e9a7fcb4268c5aaf85bf9c896fa2bfd676..70d3fc30e21a6c3c3d7a87ce2e43dd2eb8322b2c 100644
+index 7f37231b33d6cfbd3d10c6c5d0b3e0b96ba0ceb3..57f6de7872bfa80cf7668524975946cbd7fcda56 100644
 --- a/src/main/java/net/minecraft/server/MinecraftServer.java
 +++ b/src/main/java/net/minecraft/server/MinecraftServer.java
-@@ -1657,7 +1657,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1685,7 +1685,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
  
      @DontObfuscate
      public String getServerModName() {
--        return "Purpur"; // Purpur - Purpur > // Paper - Paper > // Spigot - Spigot > // CraftBukkit - cb > vanilla!
-+        return org.purpurmc.purpur.PurpurConfig.serverModName; // Purpur - Purpur > // Paper - Paper > // Spigot - Spigot > // CraftBukkit - cb > vanilla!
+-        return "Purpur"; // Purpur - Purpur > // Pufferfish - Pufferfish > // Paper - Paper > // Spigot - Spigot > // CraftBukkit - cb > vanilla!
++        return org.purpurmc.purpur.PurpurConfig.serverModName; // Purpur - Purpur > // Pufferfish - Pufferfish > // Paper - Paper > // Spigot - Spigot > // CraftBukkit - cb > vanilla!
      }
  
      public SystemReport fillSystemReport(SystemReport details) {
 diff --git a/src/main/java/org/purpurmc/purpur/PurpurConfig.java b/src/main/java/org/purpurmc/purpur/PurpurConfig.java
-index c517873abdcb1e5334ba9e7a1c2f06bbbc411f87..16ed8266bbc08963aa3973f2e48a8f76b640ed18 100644
+index 594d041c63f86dbafca756f6f7012b9ab5e385ef..c01dd22d131a0048ff1d4dd86bb48fec6965494e 100644
 --- a/src/main/java/org/purpurmc/purpur/PurpurConfig.java
 +++ b/src/main/java/org/purpurmc/purpur/PurpurConfig.java
 @@ -186,6 +186,11 @@ public class PurpurConfig {
-         afkTabListSuffix = getString("settings.messages.afk-tab-list-suffix", afkTabListSuffix);
+         afkTabListSuffix = MiniMessage.miniMessage().serialize(MiniMessage.miniMessage().deserialize(getString("settings.messages.afk-tab-list-suffix", afkTabListSuffix)));
      }
  
 +    public static String serverModName = "Purpur";

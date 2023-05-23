@@ -5,10 +5,10 @@ Subject: [PATCH] Component related conveniences
 
 
 diff --git a/src/main/java/net/minecraft/server/level/ServerPlayer.java b/src/main/java/net/minecraft/server/level/ServerPlayer.java
-index c2ff5d7e4a9f7477b7b207e9d3fb724137a35f11..f3024b03ff7709893d6e39f54504597bb59f5315 100644
+index 61b818e93de53ef14b9b928193da9b6fea3ff003..74e2731c614e0387de8eee93af005c7c1bf109f1 100644
 --- a/src/main/java/net/minecraft/server/level/ServerPlayer.java
 +++ b/src/main/java/net/minecraft/server/level/ServerPlayer.java
-@@ -1739,6 +1739,26 @@ public class ServerPlayer extends Player {
+@@ -1729,6 +1729,26 @@ public class ServerPlayer extends Player {
          this.lastSentExp = -1; // CraftBukkit - Added to reset
      }
  
@@ -36,10 +36,10 @@ index c2ff5d7e4a9f7477b7b207e9d3fb724137a35f11..f3024b03ff7709893d6e39f54504597b
      public void displayClientMessage(Component message, boolean overlay) {
          this.sendSystemMessage(message, overlay);
 diff --git a/src/main/java/net/minecraft/server/players/PlayerList.java b/src/main/java/net/minecraft/server/players/PlayerList.java
-index a01654bb553c00459e64f16e5ccc91b70cc84444..83b080cfd15b03878acca503f0f416166fbc4e5c 100644
+index 5c21de0d48fba88c3164b72e0eb624706b683fab..0e75163468ab91e7c6d245577041c288a9d865ac 100644
 --- a/src/main/java/net/minecraft/server/players/PlayerList.java
 +++ b/src/main/java/net/minecraft/server/players/PlayerList.java
-@@ -1013,6 +1013,20 @@ public abstract class PlayerList {
+@@ -1029,6 +1029,20 @@ public abstract class PlayerList {
      }
      // CraftBukkit end
  
@@ -61,11 +61,11 @@ index a01654bb553c00459e64f16e5ccc91b70cc84444..83b080cfd15b03878acca503f0f41616
          Iterator iterator = this.players.iterator();
  
 diff --git a/src/main/java/net/minecraft/world/damagesource/DamageSource.java b/src/main/java/net/minecraft/world/damagesource/DamageSource.java
-index 2848cb7c76e94d8349f042dc92daf01322a6ce5a..0edf0e24b0b311269b447a34f3aad485556bce10 100644
+index 93a1e990b0a6caae4143c2f9d09bfb368fa1d6db..615611fe372d6edaef56db058bbf2cf7641e3c26 100644
 --- a/src/main/java/net/minecraft/world/damagesource/DamageSource.java
 +++ b/src/main/java/net/minecraft/world/damagesource/DamageSource.java
-@@ -265,6 +265,15 @@ public class DamageSource {
-         return entityliving1 != null ? Component.translatable(s1, entity.getDisplayName(), entityliving1.getDisplayName()) : Component.translatable(s, entity.getDisplayName());
+@@ -126,6 +126,15 @@ public class DamageSource {
+         }
      }
  
 +    // Purpur start
@@ -77,14 +77,14 @@ index 2848cb7c76e94d8349f042dc92daf01322a6ce5a..0edf0e24b0b311269b447a34f3aad485
 +    }
 +    // Purpur end
 +
-     public boolean isFire() {
-         return this.isFireSource;
+     public String getMsgId() {
+         return this.type().msgId();
      }
 diff --git a/src/main/java/net/minecraft/world/entity/Entity.java b/src/main/java/net/minecraft/world/entity/Entity.java
-index 3073b34a0e0281b6b0330721bb0440147de28511..ebc7034d68a1c732ba5b89c95e79660d5505a74c 100644
+index 1030b54428b15f387580a2ce47a7a1eb0c8d521b..7238a6e3ffdbd7421ed978e007d256aaad84ea58 100644
 --- a/src/main/java/net/minecraft/world/entity/Entity.java
 +++ b/src/main/java/net/minecraft/world/entity/Entity.java
-@@ -3863,6 +3863,20 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
+@@ -3915,6 +3915,20 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
          return SlotAccess.NULL;
      }
  

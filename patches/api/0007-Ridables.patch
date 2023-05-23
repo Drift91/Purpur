@@ -22,10 +22,10 @@ index 998f629852e1103767e005405d1f39c2251ecd28..49cba8a3226e4e2f2b11f3171c29e975
       * @deprecated removed in 1.16
       */
 diff --git a/src/main/java/org/bukkit/entity/Entity.java b/src/main/java/org/bukkit/entity/Entity.java
-index cdbc7329cf5f67d66e31eb31e83b9e7997040f72..56afcc92854897ad5c971e576f96414bae766b7a 100644
+index a2a423d4e4c2702ba5967223cab0432dd7d04732..c6ece3f3a6a12998dab7f3c69a2af78bd22fdd48 100644
 --- a/src/main/java/org/bukkit/entity/Entity.java
 +++ b/src/main/java/org/bukkit/entity/Entity.java
-@@ -970,4 +970,35 @@ public interface Entity extends Metadatable, CommandSender, Nameable, Persistent
+@@ -954,4 +954,35 @@ public interface Entity extends Metadatable, CommandSender, Nameable, Persistent
       */
      boolean wouldCollideUsing(@NotNull BoundingBox boundingBox);
      // Paper End - Collision API

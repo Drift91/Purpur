@@ -5,7 +5,7 @@ Subject: [PATCH] ExecuteCommandEvent
 
 
 diff --git a/src/main/java/org/bukkit/command/SimpleCommandMap.java b/src/main/java/org/bukkit/command/SimpleCommandMap.java
-index b8623575b1c1b565560c2dd6438190716845a652..0bc24d0effe9b2e44c41a1c00060b0ebf7395c4a 100644
+index ac9a28922f8a556944a4c3649d74c32c622f0cb0..e842d13febca67ffa1c89fb2c1324d2609fb81fd 100644
 --- a/src/main/java/org/bukkit/command/SimpleCommandMap.java
 +++ b/src/main/java/org/bukkit/command/SimpleCommandMap.java
 @@ -143,6 +143,19 @@ public class SimpleCommandMap implements CommandMap {

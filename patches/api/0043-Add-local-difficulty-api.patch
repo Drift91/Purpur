@@ -1,0 +1,27 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: BillyGalbreath <blake.galbreath@gmail.com>
+Date: Sat, 9 Jul 2022 00:57:26 -0500
+Subject: [PATCH] Add local difficulty api
+
+
+diff --git a/src/main/java/org/bukkit/World.java b/src/main/java/org/bukkit/World.java
+index 2b45aa9b438d7856ec448c56832b2b2100961565..9b5cd8a33bae463872efecaca0829b7d2b434529 100644
+--- a/src/main/java/org/bukkit/World.java
++++ b/src/main/java/org/bukkit/World.java
+@@ -3973,6 +3973,16 @@ public interface World extends RegionAccessor, WorldInfo, PluginMessageRecipient
+     @Nullable
+     public DragonBattle getEnderDragonBattle();
+ 
++    // Purpur start
++    /**
++     * Gets the local difficulty (based on inhabited time) at a location
++     *
++     * @param location Location to check
++     * @return The local difficulty
++     */
++    public float getLocalDifficultyAt(@NotNull Location location);
++    // Purpur end
++
+     /**
+      * Represents various map environment types that a world may be
+      */

@@ -5,7 +5,7 @@ Subject: [PATCH] Fix pufferfish issues
 
 
 diff --git a/src/test/java/org/bukkit/AnnotationTest.java b/src/test/java/org/bukkit/AnnotationTest.java
-index 4bca64b2a44ae032730575ecba39f9737a5a1ec7..7769e19a5a86b5c76094058d31269fc6cc9f0ac3 100644
+index 2cb81e6d253d70388da15c9d07b630277d486c70..fa7229ae5e00e36b0dc8b4cf15d3c99892cc3291 100644
 --- a/src/test/java/org/bukkit/AnnotationTest.java
 +++ b/src/test/java/org/bukkit/AnnotationTest.java
 @@ -47,6 +47,10 @@ public class AnnotationTest {

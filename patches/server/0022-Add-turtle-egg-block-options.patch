@@ -5,7 +5,7 @@ Subject: [PATCH] Add turtle egg block options
 
 
 diff --git a/src/main/java/net/minecraft/world/level/block/TurtleEggBlock.java b/src/main/java/net/minecraft/world/level/block/TurtleEggBlock.java
-index 70d46aafa9c16921e5c5bed3d97b8f402e25038a..58fc57998f4715c42a842c4d91beb8f3b644f7f8 100644
+index 6c1a0e6f961e46a1a89850746a71e97b32514adf..1942649e868fc985a488034c411a6721595ecc67 100644
 --- a/src/main/java/net/minecraft/world/level/block/TurtleEggBlock.java
 +++ b/src/main/java/net/minecraft/world/level/block/TurtleEggBlock.java
 @@ -193,6 +193,25 @@ public class TurtleEggBlock extends Block {
@@ -36,10 +36,10 @@ index 70d46aafa9c16921e5c5bed3d97b8f402e25038a..58fc57998f4715c42a842c4d91beb8f3
      }
  }
 diff --git a/src/main/java/org/purpurmc/purpur/PurpurWorldConfig.java b/src/main/java/org/purpurmc/purpur/PurpurWorldConfig.java
-index 4b538590943d7ac36f04526ad87431d7c9b5fc60..f295aeec1428086bb3d2cf4720fdcc7c6ed2131a 100644
+index e7b23899c4787fbcb6a8c65ece88967eece4f3e1..1046f6de8a04c4368870596f90236fe01671173d 100644
 --- a/src/main/java/org/purpurmc/purpur/PurpurWorldConfig.java
 +++ b/src/main/java/org/purpurmc/purpur/PurpurWorldConfig.java
-@@ -147,6 +147,15 @@ public class PurpurWorldConfig {
+@@ -146,6 +146,15 @@ public class PurpurWorldConfig {
          });
      }
  

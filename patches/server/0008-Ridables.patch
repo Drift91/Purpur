@@ -5,7 +5,7 @@ Subject: [PATCH] Ridables
 
 
 diff --git a/src/main/java/net/minecraft/core/BlockPos.java b/src/main/java/net/minecraft/core/BlockPos.java
-index b1d12c78edf21cc29a9f9ca54e7957ddc8875ffb..a3e398d3bcc88f9c0feaa6ca8dc646f3c522c0a9 100644
+index b37e0ff164a894d2033fb94bbbc2f630a0e66bcd..ac335ec4f70830c7687ac4e0aa2a6cba9cb04ae1 100644
 --- a/src/main/java/net/minecraft/core/BlockPos.java
 +++ b/src/main/java/net/minecraft/core/BlockPos.java
 @@ -41,6 +41,12 @@ public class BlockPos extends Vec3i {
@@ -14,7 +14,7 @@ index b1d12c78edf21cc29a9f9ca54e7957ddc8875ffb..a3e398d3bcc88f9c0feaa6ca8dc646f3
  
 +    // Purpur start
 +    public BlockPos(net.minecraft.world.entity.Entity entity) {
-+        super(entity.getX(), entity.getY(), entity.getZ());
++        super(entity.getBlockX(), entity.getBlockY(), entity.getBlockZ());
 +    }
 +    // Purpur end
 +
@@ -22,22 +22,22 @@ index b1d12c78edf21cc29a9f9ca54e7957ddc8875ffb..a3e398d3bcc88f9c0feaa6ca8dc646f3
          super(x, y, z);
      }
 diff --git a/src/main/java/net/minecraft/server/MinecraftServer.java b/src/main/java/net/minecraft/server/MinecraftServer.java
-index 861cd9f092a19aca520c2be4ba7a6ee3d9aee263..7191a7e9a7fcb4268c5aaf85bf9c896fa2bfd676 100644
+index 0f6d1c56efbab0f9b84f09f7dc27eb705f4006a9..7f37231b33d6cfbd3d10c6c5d0b3e0b96ba0ceb3 100644
 --- a/src/main/java/net/minecraft/server/MinecraftServer.java
 +++ b/src/main/java/net/minecraft/server/MinecraftServer.java
-@@ -1517,6 +1517,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
-             ServerLevel worldserver = (ServerLevel) iterator.next();
+@@ -1529,6 +1529,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
              worldserver.hasPhysicsEvent =  org.bukkit.event.block.BlockPhysicsEvent.getHandlerList().getRegisteredListeners().length > 0; // Paper
+             net.minecraft.world.level.block.entity.HopperBlockEntity.skipHopperEvents = worldserver.paperConfig().hopper.disableMoveEvent || org.bukkit.event.inventory.InventoryMoveItemEvent.getHandlerList().getRegisteredListeners().length == 0; // Paper
              worldserver.hasEntityMoveEvent =  io.papermc.paper.event.entity.EntityMoveEvent.getHandlerList().getRegisteredListeners().length > 0; // Paper
 +            worldserver.hasRidableMoveEvent = org.purpurmc.purpur.event.entity.RidableMoveEvent.getHandlerList().getRegisteredListeners().length > 0; // Purpur
-             net.minecraft.world.level.block.entity.HopperBlockEntity.skipHopperEvents = worldserver.paperConfig().hopper.disableMoveEvent || org.bukkit.event.inventory.InventoryMoveItemEvent.getHandlerList().getRegisteredListeners().length == 0; // Paper
  
              this.profiler.push(() -> {
+                 return worldserver + " " + worldserver.dimension().location();
 diff --git a/src/main/java/net/minecraft/server/level/ServerLevel.java b/src/main/java/net/minecraft/server/level/ServerLevel.java
-index ccb905ad68465199516534a2ab74f7b3092297a8..af87c06e9a135ed22ea575d36d739951707b3c66 100644
+index de2d7bdd7c6f38f4d9c943162846c816bc814bd4..4ea1b4eb5e843753f02b7f683c82c82ba8a134ef 100644
 --- a/src/main/java/net/minecraft/server/level/ServerLevel.java
 +++ b/src/main/java/net/minecraft/server/level/ServerLevel.java
-@@ -222,6 +222,7 @@ public class ServerLevel extends Level implements WorldGenLevel {
+@@ -220,6 +220,7 @@ public class ServerLevel extends Level implements WorldGenLevel {
      public boolean hasPhysicsEvent = true; // Paper
      public boolean hasEntityMoveEvent = false; // Paper
      private final alternate.current.wire.WireHandler wireHandler = new alternate.current.wire.WireHandler(this); // Paper - optimize redstone (Alternate Current)
@@ -46,10 +46,10 @@ index ccb905ad68465199516534a2ab74f7b3092297a8..af87c06e9a135ed22ea575d36d739951
          final Throwable thr = new Throwable(entity + " Added to world at " + new java.util.Date());
          io.papermc.paper.util.StacktraceDeobfuscator.INSTANCE.deobfuscateThrowable(thr);
 diff --git a/src/main/java/net/minecraft/server/level/ServerPlayer.java b/src/main/java/net/minecraft/server/level/ServerPlayer.java
-index f3024b03ff7709893d6e39f54504597bb59f5315..f6360f2973c03e0105361f9e001360ec01488ce6 100644
+index 74e2731c614e0387de8eee93af005c7c1bf109f1..055915f609d1181bbcfa2ce72e1282ace71cb45c 100644
 --- a/src/main/java/net/minecraft/server/level/ServerPlayer.java
 +++ b/src/main/java/net/minecraft/server/level/ServerPlayer.java
-@@ -701,6 +701,15 @@ public class ServerPlayer extends Player {
+@@ -710,6 +710,15 @@ public class ServerPlayer extends Player {
          this.trackStartFallingPosition();
          this.trackEnteredOrExitedLavaOnVehicle();
          this.advancements.flushDirty(this);
@@ -66,18 +66,10 @@ index f3024b03ff7709893d6e39f54504597bb59f5315..f6360f2973c03e0105361f9e001360ec
  
      public void doTick() {
 diff --git a/src/main/java/net/minecraft/server/network/ServerGamePacketListenerImpl.java b/src/main/java/net/minecraft/server/network/ServerGamePacketListenerImpl.java
-index 9c5f191205b5f413890e78e316a08e6f5542bdc1..422c06e58f8dce24127a2178d3d23cdd034a2369 100644
+index 299d43f714637beb6cdce186368c4171cac74c4c..ec4891a736c5c91af7589071f87fa664983f7f72 100644
 --- a/src/main/java/net/minecraft/server/network/ServerGamePacketListenerImpl.java
 +++ b/src/main/java/net/minecraft/server/network/ServerGamePacketListenerImpl.java
-@@ -716,7 +716,6 @@ public class ServerGamePacketListenerImpl implements ServerPlayerConnection, Tic
-                 to.setY(packet.getY());
-                 to.setZ(packet.getZ());
- 
--
-                 // If the packet contains look information then we update the To location with the correct Yaw & Pitch.
-                 to.setYaw(packet.getYRot());
-                 to.setPitch(packet.getXRot());
-@@ -2778,6 +2777,8 @@ public class ServerGamePacketListenerImpl implements ServerPlayerConnection, Tic
+@@ -2809,6 +2809,8 @@ public class ServerGamePacketListenerImpl implements ServerPlayerConnection, Tic
  
                              ServerGamePacketListenerImpl.this.cserver.getPluginManager().callEvent(event);
  
@@ -87,10 +79,10 @@ index 9c5f191205b5f413890e78e316a08e6f5542bdc1..422c06e58f8dce24127a2178d3d23cdd
                              if ((entity instanceof Bucketable && entity instanceof LivingEntity && origItem != null && origItem.asItem() == Items.WATER_BUCKET) && (event.isCancelled() || ServerGamePacketListenerImpl.this.player.getInventory().getSelected() == null || ServerGamePacketListenerImpl.this.player.getInventory().getSelected().getItem() != origItem)) {
                                  entity.getEntityData().resendPossiblyDesyncedEntity(player); // Paper - The entire mob gets deleted, so resend it.
 diff --git a/src/main/java/net/minecraft/world/entity/Entity.java b/src/main/java/net/minecraft/world/entity/Entity.java
-index ebc7034d68a1c732ba5b89c95e79660d5505a74c..56600adaeb6b51451529469acca8ca1aef352ff3 100644
+index 7238a6e3ffdbd7421ed978e007d256aaad84ea58..546ae68177a3188efe911aa535e058ae69341818 100644
 --- a/src/main/java/net/minecraft/world/entity/Entity.java
 +++ b/src/main/java/net/minecraft/world/entity/Entity.java
-@@ -361,7 +361,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
+@@ -362,7 +362,7 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
      private final Set<String> tags;
      private final double[] pistonDeltas;
      private long pistonDeltasGameTime;
@@ -99,7 +91,7 @@ index ebc7034d68a1c732ba5b89c95e79660d5505a74c..56600adaeb6b51451529469acca8ca1a
      private float eyeHeight;
      public boolean isInPowderSnow;
      public boolean wasInPowderSnow;
-@@ -2811,6 +2811,12 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
+@@ -2823,6 +2823,13 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
                  this.passengers = ImmutableList.copyOf(list);
              }
  
@@ -109,10 +101,11 @@ index ebc7034d68a1c732ba5b89c95e79660d5505a74c..56600adaeb6b51451529469acca8ca1a
 +                this.rider = player;
 +            }
 +            // Purpur end
++
+             this.gameEvent(GameEvent.ENTITY_MOUNT, entity);
          }
          return true; // CraftBukkit
-     }
-@@ -2851,6 +2857,14 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
+@@ -2864,6 +2871,14 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
                  return false;
              }
              // Spigot end
@@ -127,7 +120,7 @@ index ebc7034d68a1c732ba5b89c95e79660d5505a74c..56600adaeb6b51451529469acca8ca1a
              if (this.passengers.size() == 1 && this.passengers.get(0) == entity) {
                  this.passengers = ImmutableList.of();
              } else {
-@@ -4651,4 +4665,45 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
+@@ -4738,4 +4753,45 @@ public abstract class Entity implements Nameable, EntityAccess, CommandSource {
          return ((net.minecraft.server.level.ServerChunkCache) level.getChunkSource()).isPositionTicking(this);
      }
      // Paper end
@@ -174,10 +167,10 @@ index ebc7034d68a1c732ba5b89c95e79660d5505a74c..56600adaeb6b51451529469acca8ca1a
 +    // Purpur end
  }
 diff --git a/src/main/java/net/minecraft/world/entity/GlowSquid.java b/src/main/java/net/minecraft/world/entity/GlowSquid.java
-index c1e9b40a4a0f9cdc650caa88b5ea132e06ee2496..882ab40c8cdea8c214cb8344b3ccecddb2967c1c 100644
+index c1e9b40a4a0f9cdc650caa88b5ea132e06ee2496..7b1ca8fd2908b8a02ec2cd1966a31e06eaa2dd1f 100644
 --- a/src/main/java/net/minecraft/world/entity/GlowSquid.java
 +++ b/src/main/java/net/minecraft/world/entity/GlowSquid.java
-@@ -23,6 +23,23 @@ public class GlowSquid extends Squid {
+@@ -23,6 +23,19 @@ public class GlowSquid extends Squid {
          super(type, world);
      }
  
@@ -187,10 +180,6 @@ index c1e9b40a4a0f9cdc650caa88b5ea132e06ee2496..882ab40c8cdea8c214cb8344b3ccecdd
 +        return level.purpurConfig.glowSquidRidable;
 +    }
 +
-+    @Override
-+    public boolean rideableUnderWater() {
-+        return true;
-+    }
 +
 +    @Override
 +    public boolean isControllable() {
@@ -202,10 +191,10 @@ index c1e9b40a4a0f9cdc650caa88b5ea132e06ee2496..882ab40c8cdea8c214cb8344b3ccecdd
      protected ParticleOptions getInkParticle() {
          return ParticleTypes.GLOW_SQUID_INK;
 diff --git a/src/main/java/net/minecraft/world/entity/LivingEntity.java b/src/main/java/net/minecraft/world/entity/LivingEntity.java
-index 413652284e229a51e3eefe47f239e8fa9a09ccb2..1f9f59f4ec936e365ad6428717a7d92983a66222 100644
+index f3d96caa83ef4a8083b78e3265282d4723e37d28..9b430f8624ba6326f54ca6e18a49f97cc9221b10 100644
 --- a/src/main/java/net/minecraft/world/entity/LivingEntity.java
 +++ b/src/main/java/net/minecraft/world/entity/LivingEntity.java
-@@ -221,9 +221,9 @@ public abstract class LivingEntity extends Entity {
+@@ -216,9 +216,9 @@ public abstract class LivingEntity extends Entity implements Attackable {
      protected int deathScore;
      public float lastHurt;
      public boolean jumping;
@@ -218,7 +207,7 @@ index 413652284e229a51e3eefe47f239e8fa9a09ccb2..1f9f59f4ec936e365ad6428717a7d929
      protected int lerpSteps;
      protected double lerpX;
      protected double lerpY;
-@@ -289,7 +289,7 @@ public abstract class LivingEntity extends Entity {
+@@ -284,7 +284,7 @@ public abstract class LivingEntity extends Entity implements Attackable {
          this.effectsDirty = true;
          this.useItem = ItemStack.EMPTY;
          this.lastClimbablePos = Optional.empty();
@@ -227,7 +216,7 @@ index 413652284e229a51e3eefe47f239e8fa9a09ccb2..1f9f59f4ec936e365ad6428717a7d929
          this.craftAttributes = new CraftAttributeMap(this.attributes); // CraftBukkit
          // CraftBukkit - setHealth(getMaxHealth()) inlined and simplified to skip the instanceof check for EntityPlayer, as getBukkitEntity() is not initialized in constructor
          this.entityData.set(LivingEntity.DATA_HEALTH_ID, (float) this.getAttribute(Attributes.MAX_HEALTH).getValue());
-@@ -340,6 +340,7 @@ public abstract class LivingEntity extends Entity {
+@@ -335,6 +335,7 @@ public abstract class LivingEntity extends Entity implements Attackable {
      public static AttributeSupplier.Builder createLivingAttributes() {
          return AttributeSupplier.builder().add(Attributes.MAX_HEALTH).add(Attributes.KNOCKBACK_RESISTANCE).add(Attributes.MOVEMENT_SPEED).add(Attributes.ARMOR).add(Attributes.ARMOR_TOUGHNESS);
      }
@@ -235,7 +224,7 @@ index 413652284e229a51e3eefe47f239e8fa9a09ccb2..1f9f59f4ec936e365ad6428717a7d929
  
      @Override
      protected void checkFallDamage(double heightDifference, boolean onGround, BlockState state, BlockPos landedPosition) {
-@@ -2712,7 +2713,7 @@ public abstract class LivingEntity extends Entity {
+@@ -2652,7 +2653,7 @@ public abstract class LivingEntity extends Entity implements Attackable {
      }
  
      protected long lastJumpTime = 0L; // Paper
@@ -244,7 +233,7 @@ index 413652284e229a51e3eefe47f239e8fa9a09ccb2..1f9f59f4ec936e365ad6428717a7d929
          double d0 = (double) this.getJumpPower() + this.getJumpBoostPower();
          Vec3 vec3d = this.getDeltaMovement();
          // Paper start
-@@ -3454,8 +3455,10 @@ public abstract class LivingEntity extends Entity {
+@@ -3416,8 +3417,10 @@ public abstract class LivingEntity extends Entity implements Attackable {
          this.pushEntities();
          this.level.getProfiler().pop();
          // Paper start
@@ -257,7 +246,7 @@ index 413652284e229a51e3eefe47f239e8fa9a09ccb2..1f9f59f4ec936e365ad6428717a7d929
                  Location from = new Location(this.level.getWorld(), this.xo, this.yo, this.zo, this.yRotO, this.xRotO);
                  Location to = new Location (this.level.getWorld(), this.getX(), this.getY(), this.getZ(), this.getYRot(), this.getXRot());
                  io.papermc.paper.event.entity.EntityMoveEvent event = new io.papermc.paper.event.entity.EntityMoveEvent(this.getBukkitLivingEntity(), from, to.clone());
-@@ -3465,6 +3468,21 @@ public abstract class LivingEntity extends Entity {
+@@ -3427,6 +3430,21 @@ public abstract class LivingEntity extends Entity implements Attackable {
                      absMoveTo(event.getTo().getX(), event.getTo().getY(), event.getTo().getZ(), event.getTo().getYaw(), event.getTo().getPitch());
                  }
              }
@@ -280,10 +269,10 @@ index 413652284e229a51e3eefe47f239e8fa9a09ccb2..1f9f59f4ec936e365ad6428717a7d929
          // Paper end
          if (!this.level.isClientSide && this.isSensitiveToWater() && this.isInWaterRainOrBubble()) {
 diff --git a/src/main/java/net/minecraft/world/entity/Mob.java b/src/main/java/net/minecraft/world/entity/Mob.java
-index 94b45579dc371ee980565aed2f5dee78ebd44427..4072a189813cc1a89b64b2997df0938288fab743 100644
+index 636e601b004a412d02e5be86e97d489b52c28e1b..f6ec6a249b4559e681382c9690ddc7b9e17c9efb 100644
 --- a/src/main/java/net/minecraft/world/entity/Mob.java
 +++ b/src/main/java/net/minecraft/world/entity/Mob.java
-@@ -146,8 +146,8 @@ public abstract class Mob extends LivingEntity {
+@@ -146,8 +146,8 @@ public abstract class Mob extends LivingEntity implements Targeting {
          this.restrictRadius = -1.0F;
          this.goalSelector = new GoalSelector(world.getProfilerSupplier());
          this.targetSelector = new GoalSelector(world.getProfilerSupplier());
@@ -294,7 +283,7 @@ index 94b45579dc371ee980565aed2f5dee78ebd44427..4072a189813cc1a89b64b2997df09382
          this.jumpControl = new JumpControl(this);
          this.bodyRotationControl = this.createBodyControl();
          this.navigation = this.createNavigation(world);
-@@ -1347,7 +1347,7 @@ public abstract class Mob extends LivingEntity {
+@@ -1378,7 +1378,7 @@ public abstract class Mob extends LivingEntity implements Targeting {
      protected void onOffspringSpawnedFromEgg(Player player, Mob child) {}
  
      protected InteractionResult mobInteract(Player player, InteractionHand hand) {
@@ -303,7 +292,7 @@ index 94b45579dc371ee980565aed2f5dee78ebd44427..4072a189813cc1a89b64b2997df09382
      }
  
      public boolean isWithinRestriction() {
-@@ -1728,4 +1728,56 @@ public abstract class Mob extends LivingEntity {
+@@ -1754,4 +1754,56 @@ public abstract class Mob extends LivingEntity implements Targeting {
  
          return itemmonsteregg == null ? null : new ItemStack(itemmonsteregg);
      }
@@ -397,24 +386,14 @@ index e283eb57c25f7de222f9d09dca851169f5f6e488..210a0bee1227e4671909dd553ab22027
      }
  
 diff --git a/src/main/java/net/minecraft/world/entity/ai/attributes/DefaultAttributes.java b/src/main/java/net/minecraft/world/entity/ai/attributes/DefaultAttributes.java
-index 3f7c6349a99c1cd4e0b2d7fc7a43bedcf5a9d980..3ce566840032e0b7728c6bcc4dd6e12cbd114268 100644
+index 8a720f9ae81d7ea856e28cb27a66adcf04bcb0eb..e0b70d9732a2b7d96999b7e4a497ffa1d8cf86a7 100644
 --- a/src/main/java/net/minecraft/world/entity/ai/attributes/DefaultAttributes.java
 +++ b/src/main/java/net/minecraft/world/entity/ai/attributes/DefaultAttributes.java
-@@ -2,7 +2,9 @@ package net.minecraft.world.entity.ai.attributes;
- 
- import com.google.common.collect.ImmutableMap;
- import com.mojang.logging.LogUtils;
-+
- import java.util.Map;
-+
- import net.minecraft.Util;
- import net.minecraft.core.registries.BuiltInRegistries;
- import net.minecraft.world.entity.EntityType;
-@@ -79,7 +81,87 @@ import org.slf4j.Logger;
+@@ -80,7 +80,88 @@ import org.slf4j.Logger;
  
  public class DefaultAttributes {
      private static final Logger LOGGER = LogUtils.getLogger();
--    private static final Map<EntityType<? extends LivingEntity>, AttributeSupplier> SUPPLIERS = ImmutableMap.<EntityType<? extends LivingEntity>, AttributeSupplier>builder().put(EntityType.ALLAY, Allay.createAttributes().build()).put(EntityType.ARMOR_STAND, LivingEntity.createLivingAttributes().build()).put(EntityType.AXOLOTL, Axolotl.createAttributes().build()).put(EntityType.BAT, Bat.createAttributes().build()).put(EntityType.BEE, Bee.createAttributes().build()).put(EntityType.BLAZE, Blaze.createAttributes().build()).put(EntityType.CAT, Cat.createAttributes().build()).put(EntityType.CAMEL, Camel.createAttributes().build()).put(EntityType.CAVE_SPIDER, CaveSpider.createCaveSpider().build()).put(EntityType.CHICKEN, Chicken.createAttributes().build()).put(EntityType.COD, AbstractFish.createAttributes().build()).put(EntityType.COW, Cow.createAttributes().build()).put(EntityType.CREEPER, Creeper.createAttributes().build()).put(EntityType.DOLPHIN, Dolphin.createAttributes().build()).put(EntityType.DONKEY, AbstractChestedHorse.createBaseChestedHorseAttributes().build()).put(EntityType.DROWNED, Zombie.createAttributes().build()).put(EntityType.ELDER_GUARDIAN, ElderGuardian.createAttributes().build()).put(EntityType.ENDERMAN, EnderMan.createAttributes().build()).put(EntityType.ENDERMITE, Endermite.createAttributes().build()).put(EntityType.ENDER_DRAGON, EnderDragon.createAttributes().build()).put(EntityType.EVOKER, Evoker.createAttributes().build()).put(EntityType.FOX, Fox.createAttributes().build()).put(EntityType.FROG, Frog.createAttributes().build()).put(EntityType.GHAST, Ghast.createAttributes().build()).put(EntityType.GIANT, Giant.createAttributes().build()).put(EntityType.GLOW_SQUID, GlowSquid.createAttributes().build()).put(EntityType.GOAT, Goat.createAttributes().build()).put(EntityType.GUARDIAN, Guardian.createAttributes().build()).put(EntityType.HOGLIN, Hoglin.createAttributes().build()).put(EntityType.HORSE, AbstractHorse.createBaseHorseAttributes().build()).put(EntityType.HUSK, Zombie.createAttributes().build()).put(EntityType.ILLUSIONER, Illusioner.createAttributes().build()).put(EntityType.IRON_GOLEM, IronGolem.createAttributes().build()).put(EntityType.LLAMA, Llama.createAttributes().build()).put(EntityType.MAGMA_CUBE, MagmaCube.createAttributes().build()).put(EntityType.MOOSHROOM, Cow.createAttributes().build()).put(EntityType.MULE, AbstractChestedHorse.createBaseChestedHorseAttributes().build()).put(EntityType.OCELOT, Ocelot.createAttributes().build()).put(EntityType.PANDA, Panda.createAttributes().build()).put(EntityType.PARROT, Parrot.createAttributes().build()).put(EntityType.PHANTOM, Monster.createMonsterAttributes().build()).put(EntityType.PIG, Pig.createAttributes().build()).put(EntityType.PIGLIN, Piglin.createAttributes().build()).put(EntityType.PIGLIN_BRUTE, PiglinBrute.createAttributes().build()).put(EntityType.PILLAGER, Pillager.createAttributes().build()).put(EntityType.PLAYER, Player.createAttributes().build()).put(EntityType.POLAR_BEAR, PolarBear.createAttributes().build()).put(EntityType.PUFFERFISH, AbstractFish.createAttributes().build()).put(EntityType.RABBIT, Rabbit.createAttributes().build()).put(EntityType.RAVAGER, Ravager.createAttributes().build()).put(EntityType.SALMON, AbstractFish.createAttributes().build()).put(EntityType.SHEEP, Sheep.createAttributes().build()).put(EntityType.SHULKER, Shulker.createAttributes().build()).put(EntityType.SILVERFISH, Silverfish.createAttributes().build()).put(EntityType.SKELETON, AbstractSkeleton.createAttributes().build()).put(EntityType.SKELETON_HORSE, SkeletonHorse.createAttributes().build()).put(EntityType.SLIME, Monster.createMonsterAttributes().build()).put(EntityType.SNOW_GOLEM, SnowGolem.createAttributes().build()).put(EntityType.SPIDER, Spider.createAttributes().build()).put(EntityType.SQUID, Squid.createAttributes().build()).put(EntityType.STRAY, AbstractSkeleton.createAttributes().build()).put(EntityType.STRIDER, Strider.createAttributes().build()).put(EntityType.TADPOLE, Tadpole.createAttributes().build()).put(EntityType.TRADER_LLAMA, Llama.createAttributes().build()).put(EntityType.TROPICAL_FISH, AbstractFish.createAttributes().build()).put(EntityType.TURTLE, Turtle.createAttributes().build()).put(EntityType.VEX, Vex.createAttributes().build()).put(EntityType.VILLAGER, Villager.createAttributes().build()).put(EntityType.VINDICATOR, Vindicator.createAttributes().build()).put(EntityType.WARDEN, Warden.createAttributes().build()).put(EntityType.WANDERING_TRADER, Mob.createMobAttributes().build()).put(EntityType.WITCH, Witch.createAttributes().build()).put(EntityType.WITHER, WitherBoss.createAttributes().build()).put(EntityType.WITHER_SKELETON, AbstractSkeleton.createAttributes().build()).put(EntityType.WOLF, Wolf.createAttributes().build()).put(EntityType.ZOGLIN, Zoglin.createAttributes().build()).put(EntityType.ZOMBIE, Zombie.createAttributes().build()).put(EntityType.ZOMBIE_HORSE, ZombieHorse.createAttributes().build()).put(EntityType.ZOMBIE_VILLAGER, Zombie.createAttributes().build()).put(EntityType.ZOMBIFIED_PIGLIN, ZombifiedPiglin.createAttributes().build()).build();
+-    private static final Map<EntityType<? extends LivingEntity>, AttributeSupplier> SUPPLIERS = ImmutableMap.<EntityType<? extends LivingEntity>, AttributeSupplier>builder().put(EntityType.ALLAY, Allay.createAttributes().build()).put(EntityType.ARMOR_STAND, LivingEntity.createLivingAttributes().build()).put(EntityType.AXOLOTL, Axolotl.createAttributes().build()).put(EntityType.BAT, Bat.createAttributes().build()).put(EntityType.BEE, Bee.createAttributes().build()).put(EntityType.BLAZE, Blaze.createAttributes().build()).put(EntityType.CAT, Cat.createAttributes().build()).put(EntityType.CAMEL, Camel.createAttributes().build()).put(EntityType.CAVE_SPIDER, CaveSpider.createCaveSpider().build()).put(EntityType.CHICKEN, Chicken.createAttributes().build()).put(EntityType.COD, AbstractFish.createAttributes().build()).put(EntityType.COW, Cow.createAttributes().build()).put(EntityType.CREEPER, Creeper.createAttributes().build()).put(EntityType.DOLPHIN, Dolphin.createAttributes().build()).put(EntityType.DONKEY, AbstractChestedHorse.createBaseChestedHorseAttributes().build()).put(EntityType.DROWNED, Zombie.createAttributes().build()).put(EntityType.ELDER_GUARDIAN, ElderGuardian.createAttributes().build()).put(EntityType.ENDERMAN, EnderMan.createAttributes().build()).put(EntityType.ENDERMITE, Endermite.createAttributes().build()).put(EntityType.ENDER_DRAGON, EnderDragon.createAttributes().build()).put(EntityType.EVOKER, Evoker.createAttributes().build()).put(EntityType.FOX, Fox.createAttributes().build()).put(EntityType.FROG, Frog.createAttributes().build()).put(EntityType.GHAST, Ghast.createAttributes().build()).put(EntityType.GIANT, Giant.createAttributes().build()).put(EntityType.GLOW_SQUID, GlowSquid.createAttributes().build()).put(EntityType.GOAT, Goat.createAttributes().build()).put(EntityType.GUARDIAN, Guardian.createAttributes().build()).put(EntityType.HOGLIN, Hoglin.createAttributes().build()).put(EntityType.HORSE, AbstractHorse.createBaseHorseAttributes().build()).put(EntityType.HUSK, Zombie.createAttributes().build()).put(EntityType.ILLUSIONER, Illusioner.createAttributes().build()).put(EntityType.IRON_GOLEM, IronGolem.createAttributes().build()).put(EntityType.LLAMA, Llama.createAttributes().build()).put(EntityType.MAGMA_CUBE, MagmaCube.createAttributes().build()).put(EntityType.MOOSHROOM, Cow.createAttributes().build()).put(EntityType.MULE, AbstractChestedHorse.createBaseChestedHorseAttributes().build()).put(EntityType.OCELOT, Ocelot.createAttributes().build()).put(EntityType.PANDA, Panda.createAttributes().build()).put(EntityType.PARROT, Parrot.createAttributes().build()).put(EntityType.PHANTOM, Monster.createMonsterAttributes().build()).put(EntityType.PIG, Pig.createAttributes().build()).put(EntityType.PIGLIN, Piglin.createAttributes().build()).put(EntityType.PIGLIN_BRUTE, PiglinBrute.createAttributes().build()).put(EntityType.PILLAGER, Pillager.createAttributes().build()).put(EntityType.PLAYER, Player.createAttributes().build()).put(EntityType.POLAR_BEAR, PolarBear.createAttributes().build()).put(EntityType.PUFFERFISH, AbstractFish.createAttributes().build()).put(EntityType.RABBIT, Rabbit.createAttributes().build()).put(EntityType.RAVAGER, Ravager.createAttributes().build()).put(EntityType.SALMON, AbstractFish.createAttributes().build()).put(EntityType.SHEEP, Sheep.createAttributes().build()).put(EntityType.SHULKER, Shulker.createAttributes().build()).put(EntityType.SILVERFISH, Silverfish.createAttributes().build()).put(EntityType.SKELETON, AbstractSkeleton.createAttributes().build()).put(EntityType.SKELETON_HORSE, SkeletonHorse.createAttributes().build()).put(EntityType.SLIME, Monster.createMonsterAttributes().build()).put(EntityType.SNIFFER, Sniffer.createAttributes().build()).put(EntityType.SNOW_GOLEM, SnowGolem.createAttributes().build()).put(EntityType.SPIDER, Spider.createAttributes().build()).put(EntityType.SQUID, Squid.createAttributes().build()).put(EntityType.STRAY, AbstractSkeleton.createAttributes().build()).put(EntityType.STRIDER, Strider.createAttributes().build()).put(EntityType.TADPOLE, Tadpole.createAttributes().build()).put(EntityType.TRADER_LLAMA, Llama.createAttributes().build()).put(EntityType.TROPICAL_FISH, AbstractFish.createAttributes().build()).put(EntityType.TURTLE, Turtle.createAttributes().build()).put(EntityType.VEX, Vex.createAttributes().build()).put(EntityType.VILLAGER, Villager.createAttributes().build()).put(EntityType.VINDICATOR, Vindicator.createAttributes().build()).put(EntityType.WARDEN, Warden.createAttributes().build()).put(EntityType.WANDERING_TRADER, Mob.createMobAttributes().build()).put(EntityType.WITCH, Witch.createAttributes().build()).put(EntityType.WITHER, WitherBoss.createAttributes().build()).put(EntityType.WITHER_SKELETON, AbstractSkeleton.createAttributes().build()).put(EntityType.WOLF, Wolf.createAttributes().build()).put(EntityType.ZOGLIN, Zoglin.createAttributes().build()).put(EntityType.ZOMBIE, Zombie.createAttributes().build()).put(EntityType.ZOMBIE_HORSE, ZombieHorse.createAttributes().build()).put(EntityType.ZOMBIE_VILLAGER, Zombie.createAttributes().build()).put(EntityType.ZOMBIFIED_PIGLIN, ZombifiedPiglin.createAttributes().build()).build();
 +    private static final Map<EntityType<? extends LivingEntity>, AttributeSupplier> SUPPLIERS = ImmutableMap.<EntityType<? extends LivingEntity>, AttributeSupplier>builder()
 +            .put(EntityType.ALLAY, Allay.createAttributes().build())
 +            .put(EntityType.ARMOR_STAND, LivingEntity.createLivingAttributes().build())
@@ -473,6 +452,7 @@ index 3f7c6349a99c1cd4e0b2d7fc7a43bedcf5a9d980..3ce566840032e0b7728c6bcc4dd6e12c
 +            .put(EntityType.SKELETON, AbstractSkeleton.createAttributes().build())
 +            .put(EntityType.SKELETON_HORSE, SkeletonHorse.createAttributes().build())
 +            .put(EntityType.SLIME, Monster.createMonsterAttributes().build())
++            .put(EntityType.SNIFFER, Sniffer.createAttributes().build())
 +            .put(EntityType.SNOW_GOLEM, SnowGolem.createAttributes().build())
 +            .put(EntityType.SPIDER, Spider.createAttributes().build())
 +            .put(EntityType.SQUID, Squid.createAttributes().build())
@@ -500,7 +480,7 @@ index 3f7c6349a99c1cd4e0b2d7fc7a43bedcf5a9d980..3ce566840032e0b7728c6bcc4dd6e12c
      public static AttributeSupplier getSupplier(EntityType<? extends LivingEntity> type) {
          return SUPPLIERS.get(type);
 diff --git a/src/main/java/net/minecraft/world/entity/ai/control/MoveControl.java b/src/main/java/net/minecraft/world/entity/ai/control/MoveControl.java
-index e304d7bc0b6b7c167cfc163a9df4d7a3126037e3..bde157ec8f591445cf4660922f70fa904dac213b 100644
+index 3d7586142aa5116964e4fffc6198f55fc6da324b..b4fb0af5bffffb9f0de3a2452c22b09fe92d7129 100644
 --- a/src/main/java/net/minecraft/world/entity/ai/control/MoveControl.java
 +++ b/src/main/java/net/minecraft/world/entity/ai/control/MoveControl.java
 @@ -29,6 +29,20 @@ public class MoveControl implements Control {
@@ -559,7 +539,7 @@ index 7df56705a4a0de2dc4ff7ab133fc26612c219162..60d21d6171b9af20a4c6fcc0d564a31a
          }
  
 diff --git a/src/main/java/net/minecraft/world/entity/ambient/Bat.java b/src/main/java/net/minecraft/world/entity/ambient/Bat.java
-index 1572a81ce1718964d795f2a2a411402f88901c73..76069dbd56f6452af638e2e3311b44d3e9a1f4a5 100644
+index 59338d739b6130f667d151bc27646c4a346886a2..29bfea3c4f92033aed1de1cf159d61b38708a281 100644
 --- a/src/main/java/net/minecraft/world/entity/ambient/Bat.java
 +++ b/src/main/java/net/minecraft/world/entity/ambient/Bat.java
 @@ -18,6 +18,7 @@ import net.minecraft.world.entity.EntityDimensions;
@@ -591,8 +571,8 @@ index 1572a81ce1718964d795f2a2a411402f88901c73..76069dbd56f6452af638e2e3311b44d3
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.batRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.batRidableInWater;
 +    }
 +
 +    @Override
@@ -711,7 +691,7 @@ index 1f85f34c1e50f34fb270d2fac7d307c82a550bfa..324f52edd95b5f9a498e46def8c14435
                  double d = this.wantedX - this.fish.getX();
                  double e = this.wantedY - this.fish.getY();
 diff --git a/src/main/java/net/minecraft/world/entity/animal/Bee.java b/src/main/java/net/minecraft/world/entity/animal/Bee.java
-index 337a88a7cd6445004d005ef8d56af1b1cdf800d9..16d6b0881746ade2113e2dc7977e7468abde352f 100644
+index c33e5c51839c8e6ec04c1b302127d2bf0f48664c..9881c77aca7a0b25d1dda9c5a89c367df516743f 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/Bee.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/Bee.java
 @@ -43,6 +43,7 @@ import net.minecraft.world.entity.EntityType;
@@ -766,8 +746,8 @@ index 337a88a7cd6445004d005ef8d56af1b1cdf800d9..16d6b0881746ade2113e2dc7977e7468
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.beeRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.beeRidableInWater;
 +    }
 +
 +    @Override
@@ -812,7 +792,7 @@ index 337a88a7cd6445004d005ef8d56af1b1cdf800d9..16d6b0881746ade2113e2dc7977e7468
          this.targetSelector.addGoal(1, (new Bee.BeeHurtByOtherGoal(this)).setAlertOthers(new Class[0]));
          this.targetSelector.addGoal(2, new Bee.BeeBecomeAngryTargetGoal(this));
          this.targetSelector.addGoal(3, new ResetUniversalAngerTargetGoal<>(this, true));
-@@ -883,16 +934,16 @@ public class Bee extends Animal implements NeutralMob, FlyingAnimal {
+@@ -878,16 +929,16 @@ public class Bee extends Animal implements NeutralMob, FlyingAnimal {
          }
      }
  
@@ -833,10 +813,10 @@ index 337a88a7cd6445004d005ef8d56af1b1cdf800d9..16d6b0881746ade2113e2dc7977e7468
          }
  
 diff --git a/src/main/java/net/minecraft/world/entity/animal/Cat.java b/src/main/java/net/minecraft/world/entity/animal/Cat.java
-index 0114c1cf3b6b0500149a77ebc190cb7fa2832184..a13de1a2f2b5a4e6e9a6d8de1de220578f2c623f 100644
+index 72b30a5cdeb8a43702d9ab5f198311929761fad1..a708cacf755ce82042452558bef3140361b945c2 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/Cat.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/Cat.java
-@@ -96,6 +96,31 @@ public class Cat extends TamableAnimal implements VariantHolder<CatVariant> {
+@@ -97,6 +97,31 @@ public class Cat extends TamableAnimal implements VariantHolder<CatVariant> {
          super(type, world);
      }
  
@@ -847,8 +827,8 @@ index 0114c1cf3b6b0500149a77ebc190cb7fa2832184..a13de1a2f2b5a4e6e9a6d8de1de22057
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.catRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.catRidableInWater;
 +    }
 +
 +    @Override
@@ -868,15 +848,15 @@ index 0114c1cf3b6b0500149a77ebc190cb7fa2832184..a13de1a2f2b5a4e6e9a6d8de1de22057
      public ResourceLocation getResourceLocation() {
          return this.getVariant().texture();
      }
-@@ -104,6 +129,7 @@ public class Cat extends TamableAnimal implements VariantHolder<CatVariant> {
+@@ -105,6 +130,7 @@ public class Cat extends TamableAnimal implements VariantHolder<CatVariant> {
      protected void registerGoals() {
          this.temptGoal = new Cat.CatTemptGoal(this, 0.6D, Cat.TEMPT_INGREDIENT, true);
          this.goalSelector.addGoal(1, new FloatGoal(this));
 +        this.goalSelector.addGoal(1, new org.purpurmc.purpur.entity.ai.HasRider(this)); // Purpur
-         this.goalSelector.addGoal(1, new SitWhenOrderedToGoal(this));
-         this.goalSelector.addGoal(2, new Cat.CatRelaxOnOwnerGoal(this));
-         this.goalSelector.addGoal(3, this.temptGoal);
-@@ -115,6 +141,7 @@ public class Cat extends TamableAnimal implements VariantHolder<CatVariant> {
+         this.goalSelector.addGoal(1, new PanicGoal(this, 1.5D));
+         this.goalSelector.addGoal(2, new SitWhenOrderedToGoal(this));
+         this.goalSelector.addGoal(3, new Cat.CatRelaxOnOwnerGoal(this));
+@@ -117,6 +143,7 @@ public class Cat extends TamableAnimal implements VariantHolder<CatVariant> {
          this.goalSelector.addGoal(10, new BreedGoal(this, 0.8D));
          this.goalSelector.addGoal(11, new WaterAvoidingRandomStrollGoal(this, 0.8D, 1.0000001E-5F));
          this.goalSelector.addGoal(12, new LookAtPlayerGoal(this, Player.class, 10.0F));
@@ -884,7 +864,7 @@ index 0114c1cf3b6b0500149a77ebc190cb7fa2832184..a13de1a2f2b5a4e6e9a6d8de1de22057
          this.targetSelector.addGoal(1, new NonTameRandomTargetGoal<>(this, Rabbit.class, false, (Predicate) null));
          this.targetSelector.addGoal(1, new NonTameRandomTargetGoal<>(this, Turtle.class, false, Turtle.BABY_ON_LAND_SELECTOR));
      }
-@@ -376,6 +403,7 @@ public class Cat extends TamableAnimal implements VariantHolder<CatVariant> {
+@@ -373,6 +400,7 @@ public class Cat extends TamableAnimal implements VariantHolder<CatVariant> {
  
      @Override
      public InteractionResult mobInteract(Player player, InteractionHand hand) {
@@ -893,7 +873,7 @@ index 0114c1cf3b6b0500149a77ebc190cb7fa2832184..a13de1a2f2b5a4e6e9a6d8de1de22057
          Item item = itemstack.getItem();
  
 diff --git a/src/main/java/net/minecraft/world/entity/animal/Chicken.java b/src/main/java/net/minecraft/world/entity/animal/Chicken.java
-index 72edd4d0698dd18cf2d91c39d68d3b3302d86d62..9494383f1e370964f3e32cf8d6afc03e045320d4 100644
+index b4dc621cb1be7cb4bf1cb31f921d4e9f6cffef88..a2c72f9c90aa95d50ee9fb0e278171a6a0cee2a5 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/Chicken.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/Chicken.java
 @@ -54,9 +54,27 @@ public class Chicken extends Animal {
@@ -907,8 +887,8 @@ index 72edd4d0698dd18cf2d91c39d68d3b3302d86d62..9494383f1e370964f3e32cf8d6afc03e
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.chickenRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.chickenRidableInWater;
 +    }
 +
 +    @Override
@@ -925,10 +905,10 @@ index 72edd4d0698dd18cf2d91c39d68d3b3302d86d62..9494383f1e370964f3e32cf8d6afc03e
          this.goalSelector.addGoal(2, new BreedGoal(this, 1.0D));
          this.goalSelector.addGoal(3, new TemptGoal(this, 1.0D, Chicken.FOOD_ITEMS, false));
 diff --git a/src/main/java/net/minecraft/world/entity/animal/Cod.java b/src/main/java/net/minecraft/world/entity/animal/Cod.java
-index 824e5e4fe7619ae46061c3c978c9a044db8c84ab..545ef4ab037b3173cc7377ad8147a44a2050d56f 100644
+index 824e5e4fe7619ae46061c3c978c9a044db8c84ab..718b064fa3fb3d1a00f786ff839c91ce88ae4f70 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/Cod.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/Cod.java
-@@ -13,6 +13,23 @@ public class Cod extends AbstractSchoolingFish {
+@@ -13,6 +13,18 @@ public class Cod extends AbstractSchoolingFish {
          super(type, world);
      }
  
@@ -936,11 +916,6 @@ index 824e5e4fe7619ae46061c3c978c9a044db8c84ab..545ef4ab037b3173cc7377ad8147a44a
 +    @Override
 +    public boolean isRidable() {
 +        return level.purpurConfig.codRidable;
-+    }
-+
-+    @Override
-+    public boolean rideableUnderWater() {
-+        return true;
 +    }
 +
 +    @Override
@@ -953,7 +928,7 @@ index 824e5e4fe7619ae46061c3c978c9a044db8c84ab..545ef4ab037b3173cc7377ad8147a44a
      public ItemStack getBucketItemStack() {
          return new ItemStack(Items.COD_BUCKET);
 diff --git a/src/main/java/net/minecraft/world/entity/animal/Cow.java b/src/main/java/net/minecraft/world/entity/animal/Cow.java
-index abae850f5babfd75c7547e88fb7637e9775991d3..04356c2a3f64842582e7a637afb3f77a7920bd63 100644
+index abae850f5babfd75c7547e88fb7637e9775991d3..2424ff760fc7dd91962e070f373ebf8e21f41b7d 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/Cow.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/Cow.java
 @@ -41,9 +41,27 @@ public class Cow extends Animal {
@@ -967,8 +942,8 @@ index abae850f5babfd75c7547e88fb7637e9775991d3..04356c2a3f64842582e7a637afb3f77a
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.cowRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.cowRidableInWater;
 +    }
 +
 +    @Override
@@ -1002,10 +977,10 @@ index abae850f5babfd75c7547e88fb7637e9775991d3..04356c2a3f64842582e7a637afb3f77a
              // CraftBukkit end
  
 diff --git a/src/main/java/net/minecraft/world/entity/animal/Dolphin.java b/src/main/java/net/minecraft/world/entity/animal/Dolphin.java
-index 3f100d847fbce6db5b625e99c4f3694576237372..7343f6fa6c29d4029cc35e173e5d701efd7f57c6 100644
+index e93abb02744b5cd8db88e01b6ccf145498903b11..106caca10bdd8dd546b6de24594afe236c8f7ce8 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/Dolphin.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/Dolphin.java
-@@ -78,14 +78,87 @@ public class Dolphin extends WaterAnimal {
+@@ -78,14 +78,82 @@ public class Dolphin extends WaterAnimal {
      public static final Predicate<ItemEntity> ALLOWED_ITEMS = (entityitem) -> {
          return !entityitem.hasPickUpDelay() && entityitem.isAlive() && entityitem.isInWater();
      };
@@ -1057,11 +1032,6 @@ index 3f100d847fbce6db5b625e99c4f3694576237372..7343f6fa6c29d4029cc35e173e5d701e
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return true;
-+    }
-+
-+    @Override
 +    public boolean isControllable() {
 +        return level.purpurConfig.dolphinControllable;
 +    }
@@ -1094,7 +1064,7 @@ index 3f100d847fbce6db5b625e99c4f3694576237372..7343f6fa6c29d4029cc35e173e5d701e
      @Nullable
      @Override
      public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficulty, MobSpawnType spawnReason, @Nullable SpawnGroupData entityData, @Nullable CompoundTag entityNbt) {
-@@ -160,6 +233,7 @@ public class Dolphin extends WaterAnimal {
+@@ -160,6 +228,7 @@ public class Dolphin extends WaterAnimal {
      protected void registerGoals() {
          this.goalSelector.addGoal(0, new BreathAirGoal(this));
          this.goalSelector.addGoal(0, new TryFindWaterGoal(this));
@@ -1102,7 +1072,7 @@ index 3f100d847fbce6db5b625e99c4f3694576237372..7343f6fa6c29d4029cc35e173e5d701e
          this.goalSelector.addGoal(1, new Dolphin.DolphinSwimToTreasureGoal(this));
          this.goalSelector.addGoal(2, new Dolphin.DolphinSwimWithPlayerGoal(this, 4.0D));
          this.goalSelector.addGoal(4, new RandomSwimmingGoal(this, 1.0D, 10));
-@@ -170,6 +244,7 @@ public class Dolphin extends WaterAnimal {
+@@ -170,6 +239,7 @@ public class Dolphin extends WaterAnimal {
          this.goalSelector.addGoal(8, new Dolphin.PlayWithItemsGoal());
          this.goalSelector.addGoal(8, new FollowBoatGoal(this));
          this.goalSelector.addGoal(9, new AvoidEntityGoal<>(this, Guardian.class, 8.0F, 1.0D, 1.0D));
@@ -1110,7 +1080,7 @@ index 3f100d847fbce6db5b625e99c4f3694576237372..7343f6fa6c29d4029cc35e173e5d701e
          this.targetSelector.addGoal(1, (new HurtByTargetGoal(this, new Class[]{Guardian.class})).setAlertOthers());
      }
  
-@@ -221,7 +296,7 @@ public class Dolphin extends WaterAnimal {
+@@ -221,7 +291,7 @@ public class Dolphin extends WaterAnimal {
  
      @Override
      protected boolean canRide(Entity entity) {
@@ -1119,7 +1089,7 @@ index 3f100d847fbce6db5b625e99c4f3694576237372..7343f6fa6c29d4029cc35e173e5d701e
      }
  
      @Override
-@@ -256,6 +331,11 @@ public class Dolphin extends WaterAnimal {
+@@ -256,6 +326,11 @@ public class Dolphin extends WaterAnimal {
      @Override
      public void tick() {
          super.tick();
@@ -1132,10 +1102,10 @@ index 3f100d847fbce6db5b625e99c4f3694576237372..7343f6fa6c29d4029cc35e173e5d701e
              this.setAirSupply(this.getMaxAirSupply());
          } else {
 diff --git a/src/main/java/net/minecraft/world/entity/animal/Fox.java b/src/main/java/net/minecraft/world/entity/animal/Fox.java
-index bc2b98c9f34ad2b289f5da91d704bd836edec8c1..9c3a62540a7c78615081d25af9590060dc9d5e12 100644
+index 89894bc6a55bc7e456a9d49ac48f6a8192b890ae..eb7f96f7b1583dfeb8e57a1984ed8cabeac0a2fe 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/Fox.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/Fox.java
-@@ -140,6 +140,44 @@ public class Fox extends Animal implements VariantHolder<Fox.Type> {
+@@ -141,6 +141,44 @@ public class Fox extends Animal implements VariantHolder<Fox.Type> {
          this.setCanPickUpLoot(true);
      }
  
@@ -1146,8 +1116,8 @@ index bc2b98c9f34ad2b289f5da91d704bd836edec8c1..9c3a62540a7c78615081d25af9590060
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.foxRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.foxRidableInWater;
 +    }
 +
 +    @Override
@@ -1180,7 +1150,7 @@ index bc2b98c9f34ad2b289f5da91d704bd836edec8c1..9c3a62540a7c78615081d25af9590060
      @Override
      protected void defineSynchedData() {
          super.defineSynchedData();
-@@ -159,6 +197,7 @@ public class Fox extends Animal implements VariantHolder<Fox.Type> {
+@@ -160,6 +198,7 @@ public class Fox extends Animal implements VariantHolder<Fox.Type> {
              return entityliving instanceof AbstractSchoolingFish;
          });
          this.goalSelector.addGoal(0, new Fox.FoxFloatGoal());
@@ -1188,7 +1158,7 @@ index bc2b98c9f34ad2b289f5da91d704bd836edec8c1..9c3a62540a7c78615081d25af9590060
          this.goalSelector.addGoal(0, new ClimbOnTopOfPowderSnowGoal(this, this.level));
          this.goalSelector.addGoal(1, new Fox.FaceplantGoal());
          this.goalSelector.addGoal(2, new Fox.FoxPanicGoal(2.2D));
-@@ -185,6 +224,7 @@ public class Fox extends Animal implements VariantHolder<Fox.Type> {
+@@ -186,6 +225,7 @@ public class Fox extends Animal implements VariantHolder<Fox.Type> {
          this.goalSelector.addGoal(11, new Fox.FoxSearchForItemsGoal());
          this.goalSelector.addGoal(12, new Fox.FoxLookAtPlayerGoal(this, Player.class, 24.0F));
          this.goalSelector.addGoal(13, new Fox.PerchAndSearchGoal());
@@ -1196,7 +1166,7 @@ index bc2b98c9f34ad2b289f5da91d704bd836edec8c1..9c3a62540a7c78615081d25af9590060
          this.targetSelector.addGoal(3, new Fox.DefendTrustedTargetGoal(LivingEntity.class, false, false, (entityliving) -> {
              return Fox.TRUSTED_TARGET_SELECTOR.test(entityliving) && !this.trusts(entityliving.getUUID());
          }));
-@@ -757,16 +797,16 @@ public class Fox extends Animal implements VariantHolder<Fox.Type> {
+@@ -758,16 +798,16 @@ public class Fox extends Animal implements VariantHolder<Fox.Type> {
          return new Vec3(0.0D, (double) (0.55F * this.getEyeHeight()), (double) (this.getBbWidth() * 0.4F));
      }
  
@@ -1216,7 +1186,7 @@ index bc2b98c9f34ad2b289f5da91d704bd836edec8c1..9c3a62540a7c78615081d25af9590060
              }
  
          }
-@@ -777,16 +817,16 @@ public class Fox extends Animal implements VariantHolder<Fox.Type> {
+@@ -778,16 +818,16 @@ public class Fox extends Animal implements VariantHolder<Fox.Type> {
          }
      }
  
@@ -1237,11 +1207,11 @@ index bc2b98c9f34ad2b289f5da91d704bd836edec8c1..9c3a62540a7c78615081d25af9590060
  
          }
 diff --git a/src/main/java/net/minecraft/world/entity/animal/IronGolem.java b/src/main/java/net/minecraft/world/entity/animal/IronGolem.java
-index e73acfa2f5a4066fa1beee1758082a2fe97a43b3..bdd7d46781598fd54e65d9df1efe790579f94c24 100644
+index 4fbbd74cda7e4f2c623db46c2c94d9697ca5df05..44db31b9f93970a65735eab4850dc799e6bdf002 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/IronGolem.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/IronGolem.java
 @@ -69,8 +69,27 @@ public class IronGolem extends AbstractGolem implements NeutralMob {
-         this.maxUpStep = 1.0F;
+         this.setMaxUpStep(1.0F);
      }
  
 +    // Purpur start
@@ -1251,8 +1221,8 @@ index e73acfa2f5a4066fa1beee1758082a2fe97a43b3..bdd7d46781598fd54e65d9df1efe7905
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.ironGolemRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.ironGolemRidableInWater;
 +    }
 +
 +    @Override
@@ -1293,7 +1263,7 @@ index e73acfa2f5a4066fa1beee1758082a2fe97a43b3..bdd7d46781598fd54e65d9df1efe7905
                  float f1 = 1.0F + (this.random.nextFloat() - this.random.nextFloat()) * 0.2F;
  
 diff --git a/src/main/java/net/minecraft/world/entity/animal/MushroomCow.java b/src/main/java/net/minecraft/world/entity/animal/MushroomCow.java
-index 68a5ee85e64802e4509ba0d184fc0ceb3cbe2d11..38908fd222816efd8c9ae94b6947599b6c301422 100644
+index 68a5ee85e64802e4509ba0d184fc0ceb3cbe2d11..b27e7381db833f4583a32b4276caddf277f5d25c 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/MushroomCow.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/MushroomCow.java
 @@ -63,6 +63,23 @@ public class MushroomCow extends Cow implements Shearable, VariantHolder<Mushroo
@@ -1307,8 +1277,8 @@ index 68a5ee85e64802e4509ba0d184fc0ceb3cbe2d11..38908fd222816efd8c9ae94b6947599b
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.mooshroomRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.mooshroomRidableInWater;
 +    }
 +
 +    @Override
@@ -1339,7 +1309,7 @@ index 68a5ee85e64802e4509ba0d184fc0ceb3cbe2d11..38908fd222816efd8c9ae94b6947599b
  
                  Pair<MobEffect, Integer> pair = (Pair) optional.get();
 diff --git a/src/main/java/net/minecraft/world/entity/animal/Ocelot.java b/src/main/java/net/minecraft/world/entity/animal/Ocelot.java
-index 5ad029e3c1eaeae33784b55d04181cdd119ef8c0..dc5a44730eb8a48a831830295af7c069404c9bf7 100644
+index f889e86bd6355ed72b85bf322d09ac2be4fb4954..04bb867096f6d8203ec5058f9958704f8efada71 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/Ocelot.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/Ocelot.java
 @@ -68,6 +68,23 @@ public class Ocelot extends Animal {
@@ -1353,8 +1323,8 @@ index 5ad029e3c1eaeae33784b55d04181cdd119ef8c0..dc5a44730eb8a48a831830295af7c069
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.ocelotRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.ocelotRidableInWater;
 +    }
 +
 +    @Override
@@ -1382,7 +1352,7 @@ index 5ad029e3c1eaeae33784b55d04181cdd119ef8c0..dc5a44730eb8a48a831830295af7c069
          this.targetSelector.addGoal(1, new NearestAttackableTargetGoal<>(this, Turtle.class, 10, false, false, Turtle.BABY_ON_LAND_SELECTOR));
      }
 diff --git a/src/main/java/net/minecraft/world/entity/animal/Panda.java b/src/main/java/net/minecraft/world/entity/animal/Panda.java
-index 9c1e02c3a990cd0f8bba1c84c170b438278c02a7..8125c804e51899d3cc7378354536e35dab762c87 100644
+index 9c1e02c3a990cd0f8bba1c84c170b438278c02a7..5212e531d500fa7272561fea4fc62d15a077c7d6 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/Panda.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/Panda.java
 @@ -108,6 +108,32 @@ public class Panda extends Animal {
@@ -1396,8 +1366,8 @@ index 9c1e02c3a990cd0f8bba1c84c170b438278c02a7..8125c804e51899d3cc7378354536e35d
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.pandaRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.pandaRidableInWater;
 +    }
 +
 +    @Override
@@ -1483,7 +1453,7 @@ index 9c1e02c3a990cd0f8bba1c84c170b438278c02a7..8125c804e51899d3cc7378354536e35d
          }
      }
 diff --git a/src/main/java/net/minecraft/world/entity/animal/Parrot.java b/src/main/java/net/minecraft/world/entity/animal/Parrot.java
-index 2d9aa961df034eab21ecfdb6e6d0ce7cf013505d..1ed1fd11824cbc5322dfd1f2f24a2eb5b2ae6942 100644
+index e6e40770acf71b9079e8f6ac07025319dd8e2e4e..644324e05f5bc82beb911a65085a1b8dbf7259ab 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/Parrot.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/Parrot.java
 @@ -129,12 +129,68 @@ public class Parrot extends ShoulderRidingEntity implements VariantHolder<Parrot
@@ -1526,8 +1496,8 @@ index 2d9aa961df034eab21ecfdb6e6d0ce7cf013505d..1ed1fd11824cbc5322dfd1f2f24a2eb5
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.parrotRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.parrotRidableInWater;
 +    }
 +
 +    @Override
@@ -1569,7 +1539,7 @@ index 2d9aa961df034eab21ecfdb6e6d0ce7cf013505d..1ed1fd11824cbc5322dfd1f2f24a2eb5
          this.goalSelector.addGoal(2, new SitWhenOrderedToGoal(this));
          this.goalSelector.addGoal(2, new FollowOwnerGoal(this, 1.0D, 5.0F, 1.0F, true));
 diff --git a/src/main/java/net/minecraft/world/entity/animal/Pig.java b/src/main/java/net/minecraft/world/entity/animal/Pig.java
-index fc29107ee256af2b5f2e481f17ade6cfcaa101ae..8ac5ccf4c36c6361371e1c1519a5179d0036cb44 100644
+index ee2dc361ecae87c9d4e2d038068934717c5a8b16..5d7a865a59c523c9575a00391543f375a05c5829 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/Pig.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/Pig.java
 @@ -64,9 +64,27 @@ public class Pig extends Animal implements ItemSteerable, Saddleable {
@@ -1583,8 +1553,8 @@ index fc29107ee256af2b5f2e481f17ade6cfcaa101ae..8ac5ccf4c36c6361371e1c1519a5179d
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.pigRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.pigRidableInWater;
 +    }
 +
 +    @Override
@@ -1601,7 +1571,7 @@ index fc29107ee256af2b5f2e481f17ade6cfcaa101ae..8ac5ccf4c36c6361371e1c1519a5179d
          this.goalSelector.addGoal(3, new BreedGoal(this, 1.0D));
          this.goalSelector.addGoal(4, new TemptGoal(this, 1.2D, Ingredient.of(Items.CARROT_ON_A_STICK), false));
 diff --git a/src/main/java/net/minecraft/world/entity/animal/PolarBear.java b/src/main/java/net/minecraft/world/entity/animal/PolarBear.java
-index e83f7967e8b975cd77535d0097c35936c7d4b9bb..7b6aeae34756a254bc60e8a13359a65a7611c2ed 100644
+index 41123a1ec1b410428d804c6f80fa969c4946608f..16ee121aa80656d33ffdf82dc81679ab94adeb98 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/PolarBear.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/PolarBear.java
 @@ -60,11 +60,40 @@ public class PolarBear extends Animal implements NeutralMob {
@@ -1621,8 +1591,8 @@ index e83f7967e8b975cd77535d0097c35936c7d4b9bb..7b6aeae34756a254bc60e8a13359a65a
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.polarBearRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.polarBearRidableInWater;
 +    }
 +
 +    @Override
@@ -1681,10 +1651,10 @@ index e83f7967e8b975cd77535d0097c35936c7d4b9bb..7b6aeae34756a254bc60e8a13359a65a
  
      public float getStandingAnimationScale(float tickDelta) {
 diff --git a/src/main/java/net/minecraft/world/entity/animal/Pufferfish.java b/src/main/java/net/minecraft/world/entity/animal/Pufferfish.java
-index ce02552c1b3c62cf9f48425838a129a3ec40a049..71929e5fe8851ad5620f25b6ed5058653231d769 100644
+index 9aa5aa0d66257bf1413a904c516293aea30d2ca8..1190a22f03aaf7f2c3b53bdfd9afac00200f77f4 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/Pufferfish.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/Pufferfish.java
-@@ -45,6 +45,23 @@ public class Pufferfish extends AbstractFish {
+@@ -45,6 +45,18 @@ public class Pufferfish extends AbstractFish {
          this.refreshDimensions();
      }
  
@@ -1692,11 +1662,6 @@ index ce02552c1b3c62cf9f48425838a129a3ec40a049..71929e5fe8851ad5620f25b6ed505865
 +    @Override
 +    public boolean isRidable() {
 +        return level.purpurConfig.pufferfishRidable;
-+    }
-+
-+    @Override
-+    public boolean rideableUnderWater() {
-+        return true;
 +    }
 +
 +    @Override
@@ -1709,7 +1674,7 @@ index ce02552c1b3c62cf9f48425838a129a3ec40a049..71929e5fe8851ad5620f25b6ed505865
      protected void defineSynchedData() {
          super.defineSynchedData();
 diff --git a/src/main/java/net/minecraft/world/entity/animal/Rabbit.java b/src/main/java/net/minecraft/world/entity/animal/Rabbit.java
-index 7a1fcae6de2dd8247fcb1f1612122edf8f56965a..db6521531517dbb06ff9aea4c1b5aa9c6bd858ac 100644
+index 2e75066db6cf4903f04428b73c4e868988776920..a465925fdef618110bbf997b8ab43ed4e601cb6d 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/Rabbit.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/Rabbit.java
 @@ -83,6 +83,7 @@ public class Rabbit extends Animal implements VariantHolder<Rabbit.Variant> {
@@ -1731,8 +1696,8 @@ index 7a1fcae6de2dd8247fcb1f1612122edf8f56965a..db6521531517dbb06ff9aea4c1b5aa9c
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.rabbitRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.rabbitRidableInWater;
 +    }
 +
 +    @Override
@@ -1844,10 +1809,10 @@ index 7a1fcae6de2dd8247fcb1f1612122edf8f56965a..db6521531517dbb06ff9aea4c1b5aa9c
  
          @Override
 diff --git a/src/main/java/net/minecraft/world/entity/animal/Salmon.java b/src/main/java/net/minecraft/world/entity/animal/Salmon.java
-index 0af79daa357f53a8871e293b57e16c099e5d3f64..59cb21bc3166f4cc77b962c253ed786fd04090de 100644
+index 0af79daa357f53a8871e293b57e16c099e5d3f64..cc1e6f9d0ee241f32878ed96820f17ccb72396ba 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/Salmon.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/Salmon.java
-@@ -13,6 +13,23 @@ public class Salmon extends AbstractSchoolingFish {
+@@ -13,6 +13,18 @@ public class Salmon extends AbstractSchoolingFish {
          super(type, world);
      }
  
@@ -1855,11 +1820,6 @@ index 0af79daa357f53a8871e293b57e16c099e5d3f64..59cb21bc3166f4cc77b962c253ed786f
 +    @Override
 +    public boolean isRidable() {
 +        return level.purpurConfig.salmonRidable;
-+    }
-+
-+    @Override
-+    public boolean rideableUnderWater() {
-+        return true;
 +    }
 +
 +    @Override
@@ -1872,7 +1832,7 @@ index 0af79daa357f53a8871e293b57e16c099e5d3f64..59cb21bc3166f4cc77b962c253ed786f
      public int getMaxSchoolSize() {
          return 5;
 diff --git a/src/main/java/net/minecraft/world/entity/animal/Sheep.java b/src/main/java/net/minecraft/world/entity/animal/Sheep.java
-index efac4395fdb79a78fbb18a0f828b1a3c90b102fe..0be5aaa76997063d2c8df5547e01260e11c08f7a 100644
+index fb3777e158065a6ce306a2a6e66bec053da2aeb4..99c55d6bae08d75ae19c5dc004ca577e44b589a4 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/Sheep.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/Sheep.java
 @@ -116,10 +116,28 @@ public class Sheep extends Animal implements Shearable {
@@ -1886,8 +1846,8 @@ index efac4395fdb79a78fbb18a0f828b1a3c90b102fe..0be5aaa76997063d2c8df5547e01260e
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.sheepRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.sheepRidableInWater;
 +    }
 +
 +    @Override
@@ -1905,7 +1865,7 @@ index efac4395fdb79a78fbb18a0f828b1a3c90b102fe..0be5aaa76997063d2c8df5547e01260e
          this.goalSelector.addGoal(2, new BreedGoal(this, 1.0D));
          this.goalSelector.addGoal(3, new TemptGoal(this, 1.1D, Ingredient.of(Items.WHEAT), false));
 diff --git a/src/main/java/net/minecraft/world/entity/animal/SnowGolem.java b/src/main/java/net/minecraft/world/entity/animal/SnowGolem.java
-index 35e53663e4a6c4d56ec4577d08e7b040cc0c720f..c6700d12fffbfea0fced14e466da0b760a73a237 100644
+index 5437571ce76c62e9cae841e99127867fffb39f43..383302ab11d2e62cc4ca135fda9c1ebe566491e5 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/SnowGolem.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/SnowGolem.java
 @@ -54,12 +54,31 @@ public class SnowGolem extends AbstractGolem implements Shearable, RangedAttackM
@@ -1919,8 +1879,8 @@ index 35e53663e4a6c4d56ec4577d08e7b040cc0c720f..c6700d12fffbfea0fced14e466da0b76
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.snowGolemRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.snowGolemRidableInWater;
 +    }
 +
 +    @Override
@@ -1940,15 +1900,15 @@ index 35e53663e4a6c4d56ec4577d08e7b040cc0c720f..c6700d12fffbfea0fced14e466da0b76
          this.targetSelector.addGoal(1, new NearestAttackableTargetGoal<>(this, Mob.class, 10, true, false, (entityliving) -> {
              return entityliving instanceof Enemy;
          }));
-@@ -113,6 +132,7 @@ public class SnowGolem extends AbstractGolem implements Shearable, RangedAttackM
+@@ -107,6 +126,7 @@ public class SnowGolem extends AbstractGolem implements Shearable, RangedAttackM
                  return;
              }
  
 +            if (getRider() != null && this.isControllable() && !level.purpurConfig.snowGolemLeaveTrailWhenRidden) return; // Purpur - don't leave snow trail when being ridden
              BlockState iblockdata = Blocks.SNOW.defaultBlockState();
  
-             for (int l = 0; l < 4; ++l) {
-@@ -160,7 +180,7 @@ public class SnowGolem extends AbstractGolem implements Shearable, RangedAttackM
+             for (int i = 0; i < 4; ++i) {
+@@ -154,7 +174,7 @@ public class SnowGolem extends AbstractGolem implements Shearable, RangedAttackM
          if (itemstack.is(Items.SHEARS) && this.readyForShearing()) {
              // CraftBukkit start
              if (!CraftEventFactory.handlePlayerShearEntityEvent(player, this, itemstack, hand)) {
@@ -1957,7 +1917,7 @@ index 35e53663e4a6c4d56ec4577d08e7b040cc0c720f..c6700d12fffbfea0fced14e466da0b76
              }
              // CraftBukkit end
              this.shear(SoundSource.PLAYERS);
-@@ -173,7 +193,7 @@ public class SnowGolem extends AbstractGolem implements Shearable, RangedAttackM
+@@ -167,7 +187,7 @@ public class SnowGolem extends AbstractGolem implements Shearable, RangedAttackM
  
              return InteractionResult.sidedSuccess(this.level.isClientSide);
          } else {
@@ -1967,10 +1927,10 @@ index 35e53663e4a6c4d56ec4577d08e7b040cc0c720f..c6700d12fffbfea0fced14e466da0b76
      }
  
 diff --git a/src/main/java/net/minecraft/world/entity/animal/Squid.java b/src/main/java/net/minecraft/world/entity/animal/Squid.java
-index a51424d29ac353cf1bec4d1484db0acb63bebba5..30687391baacd693fa3bb9e3efbd492d4e4d32c8 100644
+index 72eea6e512060fc622ca79ca87437f19a64604cc..aa19d10f44aebed8fb174479b72da2a1601c2e38 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/Squid.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/Squid.java
-@@ -50,9 +50,37 @@ public class Squid extends WaterAnimal {
+@@ -50,9 +50,32 @@ public class Squid extends WaterAnimal {
          this.tentacleSpeed = 1.0F / (this.random.nextFloat() + 1.0F) * 0.2F;
      }
  
@@ -1978,11 +1938,6 @@ index a51424d29ac353cf1bec4d1484db0acb63bebba5..30687391baacd693fa3bb9e3efbd492d
 +    @Override
 +    public boolean isRidable() {
 +        return level.purpurConfig.squidRidable;
-+    }
-+
-+    @Override
-+    public boolean rideableUnderWater() {
-+        return true;
 +    }
 +
 +    @Override
@@ -2008,7 +1963,7 @@ index a51424d29ac353cf1bec4d1484db0acb63bebba5..30687391baacd693fa3bb9e3efbd492d
          this.goalSelector.addGoal(1, new Squid.SquidFleeGoal());
      }
  
-@@ -244,6 +272,38 @@ public class Squid extends WaterAnimal {
+@@ -244,6 +267,38 @@ public class Squid extends WaterAnimal {
  
          @Override
          public void tick() {
@@ -2048,10 +2003,10 @@ index a51424d29ac353cf1bec4d1484db0acb63bebba5..30687391baacd693fa3bb9e3efbd492d
  
              if (i > 100) {
 diff --git a/src/main/java/net/minecraft/world/entity/animal/TropicalFish.java b/src/main/java/net/minecraft/world/entity/animal/TropicalFish.java
-index b05b560b7570e97bc234b75f26233909fcf575b3..7df3ee0f4b1a467d95f3eade65c0846b8a2e6337 100644
+index b05b560b7570e97bc234b75f26233909fcf575b3..7c90f91685845329845a8c81f87ad9f6fdf4d973 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/TropicalFish.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/TropicalFish.java
-@@ -42,6 +42,23 @@ public class TropicalFish extends AbstractSchoolingFish implements VariantHolder
+@@ -42,6 +42,18 @@ public class TropicalFish extends AbstractSchoolingFish implements VariantHolder
          super(type, world);
      }
  
@@ -2059,11 +2014,6 @@ index b05b560b7570e97bc234b75f26233909fcf575b3..7df3ee0f4b1a467d95f3eade65c0846b
 +    @Override
 +    public boolean isRidable() {
 +        return level.purpurConfig.tropicalFishRidable;
-+    }
-+
-+    @Override
-+    public boolean rideableUnderWater() {
-+        return true;
 +    }
 +
 +    @Override
@@ -2076,11 +2026,11 @@ index b05b560b7570e97bc234b75f26233909fcf575b3..7df3ee0f4b1a467d95f3eade65c0846b
          return "entity.minecraft.tropical_fish.predefined." + variant;
      }
 diff --git a/src/main/java/net/minecraft/world/entity/animal/Turtle.java b/src/main/java/net/minecraft/world/entity/animal/Turtle.java
-index 25503678e7d049a8b3172cfad8a5606958c32302..1d188320b10a640e4667b775e996b4fcdd5a1e73 100644
+index 81dab77f525ae667614f940c4ff5ec308a9579a2..ea66c2976401752688fdf9ee44802c79ea8545a1 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/Turtle.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/Turtle.java
-@@ -82,6 +82,23 @@ public class Turtle extends Animal {
-         this.maxUpStep = 1.0F;
+@@ -83,6 +83,23 @@ public class Turtle extends Animal {
+         this.setMaxUpStep(1.0F);
      }
  
 +    // Purpur start
@@ -2090,8 +2040,8 @@ index 25503678e7d049a8b3172cfad8a5606958c32302..1d188320b10a640e4667b775e996b4fc
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.turtleRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.turtleRidableInWater;
 +    }
 +
 +    @Override
@@ -2103,7 +2053,7 @@ index 25503678e7d049a8b3172cfad8a5606958c32302..1d188320b10a640e4667b775e996b4fc
      public void setHomePos(BlockPos pos) {
          this.entityData.set(Turtle.HOME_POS, pos.immutable()); // Paper - called with mutablepos...
      }
-@@ -184,6 +201,7 @@ public class Turtle extends Animal {
+@@ -185,6 +202,7 @@ public class Turtle extends Animal {
  
      @Override
      protected void registerGoals() {
@@ -2111,7 +2061,7 @@ index 25503678e7d049a8b3172cfad8a5606958c32302..1d188320b10a640e4667b775e996b4fc
          this.goalSelector.addGoal(0, new Turtle.TurtlePanicGoal(this, 1.2D));
          this.goalSelector.addGoal(1, new Turtle.TurtleBreedGoal(this, 1.0D));
          this.goalSelector.addGoal(1, new Turtle.TurtleLayEggGoal(this, 1.0D));
-@@ -341,13 +359,15 @@ public class Turtle extends Animal {
+@@ -342,13 +360,15 @@ public class Turtle extends Animal {
          org.bukkit.craftbukkit.event.CraftEventFactory.entityDamage = null; // CraftBukkit
      }
  
@@ -2128,7 +2078,7 @@ index 25503678e7d049a8b3172cfad8a5606958c32302..1d188320b10a640e4667b775e996b4fc
          }
  
          private void updateSpeed() {
-@@ -366,8 +386,18 @@ public class Turtle extends Animal {
+@@ -367,8 +387,18 @@ public class Turtle extends Animal {
  
          }
  
@@ -2148,17 +2098,17 @@ index 25503678e7d049a8b3172cfad8a5606958c32302..1d188320b10a640e4667b775e996b4fc
              this.updateSpeed();
              if (this.operation == MoveControl.Operation.MOVE_TO && !this.turtle.getNavigation().isDone()) {
                  double d0 = this.wantedX - this.turtle.getX();
-@@ -380,7 +410,7 @@ public class Turtle extends Animal {
+@@ -384,7 +414,7 @@ public class Turtle extends Animal {
  
-                 this.turtle.setYRot(this.rotlerp(this.turtle.getYRot(), f, 90.0F));
-                 this.turtle.yBodyRot = this.turtle.getYRot();
--                float f1 = (float) (this.speedModifier * this.turtle.getAttributeValue(Attributes.MOVEMENT_SPEED));
-+                float f1 = (float) (this.getSpeedModifier() * this.turtle.getAttributeValue(Attributes.MOVEMENT_SPEED));
+                     this.turtle.setYRot(this.rotlerp(this.turtle.getYRot(), f, 90.0F));
+                     this.turtle.yBodyRot = this.turtle.getYRot();
+-                    float f1 = (float) (this.speedModifier * this.turtle.getAttributeValue(Attributes.MOVEMENT_SPEED));
++                    float f1 = (float) (this.getSpeedModifier() * this.turtle.getAttributeValue(Attributes.MOVEMENT_SPEED));
  
-                 this.turtle.setSpeed(Mth.lerp(0.125F, this.turtle.getSpeed(), f1));
-                 this.turtle.setDeltaMovement(this.turtle.getDeltaMovement().add(0.0D, (double) this.turtle.getSpeed() * d1 * 0.1D, 0.0D));
+                     this.turtle.setSpeed(Mth.lerp(0.125F, this.turtle.getSpeed(), f1));
+                     this.turtle.setDeltaMovement(this.turtle.getDeltaMovement().add(0.0D, (double) this.turtle.getSpeed() * d1 * 0.1D, 0.0D));
 diff --git a/src/main/java/net/minecraft/world/entity/animal/Wolf.java b/src/main/java/net/minecraft/world/entity/animal/Wolf.java
-index a6a50eb4f4ac85751071571876ac804d44ee1ee6..b9c692a2f42976eb459ed6a4078dca28eddeb459 100644
+index 612601b2536dc522356d4dd2c2ea1192f6435f72..c8a18ecd36393747a95ad9026c5a7b1d62ff727a 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/Wolf.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/Wolf.java
 @@ -102,9 +102,32 @@ public class Wolf extends TamableAnimal implements NeutralMob {
@@ -2172,8 +2122,8 @@ index a6a50eb4f4ac85751071571876ac804d44ee1ee6..b9c692a2f42976eb459ed6a4078dca28
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.wolfRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.wolfRidableInWater;
 +    }
 +
 +    public void onMount(Player rider) {
@@ -2203,7 +2153,7 @@ index a6a50eb4f4ac85751071571876ac804d44ee1ee6..b9c692a2f42976eb459ed6a4078dca28
          this.targetSelector.addGoal(2, new OwnerHurtTargetGoal(this));
          this.targetSelector.addGoal(3, (new HurtByTargetGoal(this, new Class[0])).setAlertOthers());
 diff --git a/src/main/java/net/minecraft/world/entity/animal/allay/Allay.java b/src/main/java/net/minecraft/world/entity/animal/allay/Allay.java
-index c66a214dfbde7fd8e7a68efaa82ac260178f297f..d98b726de2030662cb79e6c8446436c313a25d50 100644
+index a41d8101c960163803179d3717889aee6182d0bb..c743f487b7a327ee66cffc86cbe5d13c81fd2cab 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/allay/Allay.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/allay/Allay.java
 @@ -101,10 +101,23 @@ public class Allay extends PathfinderMob implements InventoryCarrier {
@@ -2242,8 +2192,8 @@ index c66a214dfbde7fd8e7a68efaa82ac260178f297f..d98b726de2030662cb79e6c8446436c3
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.allayRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.allayRidableInWater;
 +    }
 +
 +    @Override
@@ -2261,22 +2211,17 @@ index c66a214dfbde7fd8e7a68efaa82ac260178f297f..d98b726de2030662cb79e6c8446436c3
      protected Brain.Provider<Allay> brainProvider() {
          return Brain.provider(Allay.MEMORY_TYPES, Allay.SENSOR_TYPES);
 diff --git a/src/main/java/net/minecraft/world/entity/animal/axolotl/Axolotl.java b/src/main/java/net/minecraft/world/entity/animal/axolotl/Axolotl.java
-index 02219f5ca614fefffa1ceb3c7036dfe1c90c8676..ac7b58d4ad0e3c3d3fe8aaf7a6b4237786c09e75 100644
+index 38d21943fb2940f53c2d0ac2c3b94a6f0e46e700..2c5aa1fe81a2411de81c233092bbe3841ed627ea 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/axolotl/Axolotl.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/axolotl/Axolotl.java
-@@ -98,6 +98,28 @@ public class Axolotl extends Animal implements LerpingModel, VariantHolder<Axolo
-         this.maxUpStep = 1.0F;
+@@ -98,6 +98,23 @@ public class Axolotl extends Animal implements LerpingModel, VariantHolder<Axolo
+         this.setMaxUpStep(1.0F);
      }
  
 +    // Purpur start
 +    @Override
 +    public boolean isRidable() {
 +        return level.purpurConfig.axolotlRidable;
-+    }
-+
-+    @Override
-+    public boolean rideableUnderWater() {
-+        return true;
 +    }
 +
 +    @Override
@@ -2293,7 +2238,7 @@ index 02219f5ca614fefffa1ceb3c7036dfe1c90c8676..ac7b58d4ad0e3c3d3fe8aaf7a6b42377
      @Override
      public Map<String, Vector3f> getModelRotationValues() {
          return this.modelRotationValues;
-@@ -520,14 +542,22 @@ public class Axolotl extends Animal implements LerpingModel, VariantHolder<Axolo
+@@ -521,14 +538,22 @@ public class Axolotl extends Animal implements LerpingModel, VariantHolder<Axolo
      private static class AxolotlMoveControl extends SmoothSwimmingMoveControl {
  
          private final Axolotl axolotl;
@@ -2316,7 +2261,7 @@ index 02219f5ca614fefffa1ceb3c7036dfe1c90c8676..ac7b58d4ad0e3c3d3fe8aaf7a6b42377
              if (!this.axolotl.isPlayingDead()) {
                  super.tick();
              }
-@@ -542,9 +572,9 @@ public class Axolotl extends Animal implements LerpingModel, VariantHolder<Axolo
+@@ -543,9 +568,9 @@ public class Axolotl extends Animal implements LerpingModel, VariantHolder<Axolo
          }
  
          @Override
@@ -2329,12 +2274,12 @@ index 02219f5ca614fefffa1ceb3c7036dfe1c90c8676..ac7b58d4ad0e3c3d3fe8aaf7a6b42377
  
          }
 diff --git a/src/main/java/net/minecraft/world/entity/animal/frog/Frog.java b/src/main/java/net/minecraft/world/entity/animal/frog/Frog.java
-index 0a051c7e7f5a172a9b906de04ef2a0419eda26eb..844004cefd85fdc3fb1628449e8452bd6207a77b 100644
+index be44667b8205cd3bb1cefddf8e0e743535414e14..24419e78976cabc7f14a4cff0f273c958344a8d6 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/frog/Frog.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/frog/Frog.java
-@@ -84,16 +84,65 @@ public class Frog extends Animal implements VariantHolder<FrogVariant> {
-     public final AnimationState walkAnimationState = new AnimationState();
-     public final AnimationState swimAnimationState = new AnimationState();
+@@ -82,16 +82,65 @@ public class Frog extends Animal implements VariantHolder<FrogVariant> {
+     public final AnimationState croakAnimationState = new AnimationState();
+     public final AnimationState tongueAnimationState = new AnimationState();
      public final AnimationState swimIdleAnimationState = new AnimationState();
 +    private org.purpurmc.purpur.controller.MoveControllerWASD purpurLandController; // Purpur
 +    private org.purpurmc.purpur.controller.WaterMoveControllerWASD purpurWaterController; // Purpur
@@ -2365,7 +2310,7 @@ index 0a051c7e7f5a172a9b906de04ef2a0419eda26eb..844004cefd85fdc3fb1628449e8452bd
 +            }
 +        };
 +        // Purpur end
-         this.maxUpStep = 1.0F;
+         this.setMaxUpStep(1.0F);
      }
  
 +    // Purpur start
@@ -2375,8 +2320,8 @@ index 0a051c7e7f5a172a9b906de04ef2a0419eda26eb..844004cefd85fdc3fb1628449e8452bd
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.frogRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.frogRidableInWater;
 +    }
 +
 +    @Override
@@ -2399,7 +2344,7 @@ index 0a051c7e7f5a172a9b906de04ef2a0419eda26eb..844004cefd85fdc3fb1628449e8452bd
      @Override
      protected Brain.Provider<Frog> brainProvider() {
          return Brain.provider(MEMORY_TYPES, SENSOR_TYPES);
-@@ -383,7 +432,7 @@ public class Frog extends Animal implements VariantHolder<FrogVariant> {
+@@ -376,7 +425,7 @@ public class Frog extends Animal implements VariantHolder<FrogVariant> {
          return world.getBlockState(pos.below()).is(BlockTags.FROGS_SPAWNABLE_ON) && isBrightEnoughToSpawn(world, pos);
      }
  
@@ -2409,7 +2354,7 @@ index 0a051c7e7f5a172a9b906de04ef2a0419eda26eb..844004cefd85fdc3fb1628449e8452bd
              super(entity);
          }
 diff --git a/src/main/java/net/minecraft/world/entity/animal/frog/Tadpole.java b/src/main/java/net/minecraft/world/entity/animal/frog/Tadpole.java
-index e591b0a09f5a8475b3ec9cd28bd5d5b69809ed73..35aa223731014628e4b1654a8b72a2923a483a03 100644
+index e591b0a09f5a8475b3ec9cd28bd5d5b69809ed73..63553436193cc3063cd4c4e9f50695fb5209ff9d 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/frog/Tadpole.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/frog/Tadpole.java
 @@ -45,13 +45,50 @@ public class Tadpole extends AbstractFish {
@@ -2446,8 +2391,8 @@ index e591b0a09f5a8475b3ec9cd28bd5d5b69809ed73..35aa223731014628e4b1654a8b72a292
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.tadpoleRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.tadpoleRidableInWater;
 +    }
 +
 +    @Override
@@ -2465,7 +2410,7 @@ index e591b0a09f5a8475b3ec9cd28bd5d5b69809ed73..35aa223731014628e4b1654a8b72a292
      protected PathNavigation createNavigation(Level world) {
          return new WaterBoundPathNavigation(this, world);
 diff --git a/src/main/java/net/minecraft/world/entity/animal/goat/Goat.java b/src/main/java/net/minecraft/world/entity/animal/goat/Goat.java
-index 0f365b9dbb160d90ddf5fcd40895305df48ce916..d6e527fb592f721aac59d52a1e84e147da62913b 100644
+index 4fdc3bd591b6df4c28901e4571aa23baf034d885..81790ac38ef67682053751a9e6813eed8d744337 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/goat/Goat.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/goat/Goat.java
 @@ -89,6 +89,23 @@ public class Goat extends Animal {
@@ -2479,8 +2424,8 @@ index 0f365b9dbb160d90ddf5fcd40895305df48ce916..d6e527fb592f721aac59d52a1e84e147
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.goatRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.goatRidableInWater;
 +    }
 +
 +    @Override
@@ -2502,16 +2447,16 @@ index 0f365b9dbb160d90ddf5fcd40895305df48ce916..d6e527fb592f721aac59d52a1e84e147
          this.level.getProfiler().pop();
          this.level.getProfiler().push("goatActivityUpdate");
 diff --git a/src/main/java/net/minecraft/world/entity/animal/horse/AbstractHorse.java b/src/main/java/net/minecraft/world/entity/animal/horse/AbstractHorse.java
-index 72d660cd2ade39335024897cffb8b8a151a7cb71..ef5f059b51e330c801e1f0d5297c62ea9b77c637 100644
+index 47cd69f91bbc2e2be9ec970674adc522e21593c8..2d298960afe61ed2b73ca72908849879408738b9 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/horse/AbstractHorse.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/horse/AbstractHorse.java
-@@ -118,12 +118,22 @@ public abstract class AbstractHorse extends Animal implements ContainerListener,
+@@ -144,12 +144,22 @@ public abstract class AbstractHorse extends Animal implements ContainerListener,
  
      protected AbstractHorse(EntityType<? extends AbstractHorse> type, Level world) {
          super(type, world);
 +        this.moveControl = new net.minecraft.world.entity.ai.control.MoveControl(this); // Purpur - use vanilla controller
 +        this.lookControl = new net.minecraft.world.entity.ai.control.LookControl(this); // Purpur - use vanilla controller
-         this.maxUpStep = 1.0F;
+         this.setMaxUpStep(1.0F);
          this.createInventory();
      }
  
@@ -2528,7 +2473,7 @@ index 72d660cd2ade39335024897cffb8b8a151a7cb71..ef5f059b51e330c801e1f0d5297c62ea
          this.goalSelector.addGoal(1, new PanicGoal(this, 1.2D));
          this.goalSelector.addGoal(1, new RunAroundLikeCrazyGoal(this, 1.2D));
          this.goalSelector.addGoal(2, new BreedGoal(this, 1.0D, AbstractHorse.class));
-@@ -134,6 +144,7 @@ public abstract class AbstractHorse extends Animal implements ContainerListener,
+@@ -160,6 +170,7 @@ public abstract class AbstractHorse extends Animal implements ContainerListener,
          if (this.canPerformRearing()) {
              this.goalSelector.addGoal(9, new RandomStandGoal(this));
          }
@@ -2537,7 +2482,7 @@ index 72d660cd2ade39335024897cffb8b8a151a7cb71..ef5f059b51e330c801e1f0d5297c62ea
          this.addBehaviourGoals();
      }
 diff --git a/src/main/java/net/minecraft/world/entity/animal/horse/Donkey.java b/src/main/java/net/minecraft/world/entity/animal/horse/Donkey.java
-index e0dfee0e0ce091d5ae0ec740e939c2c50915c104..13e03f23b1d5b120b403dda0f5002480ccc2421a 100644
+index e0dfee0e0ce091d5ae0ec740e939c2c50915c104..6ed4ef1c628b77448629388bfc4a8575dd4afefd 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/horse/Donkey.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/horse/Donkey.java
 @@ -15,6 +15,13 @@ public class Donkey extends AbstractChestedHorse {
@@ -2546,8 +2491,8 @@ index e0dfee0e0ce091d5ae0ec740e939c2c50915c104..13e03f23b1d5b120b403dda0f5002480
  
 +    // Purpur start
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.donkeyRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.donkeyRidableInWater;
 +    }
 +    // Purpur end
 +
@@ -2555,7 +2500,7 @@ index e0dfee0e0ce091d5ae0ec740e939c2c50915c104..13e03f23b1d5b120b403dda0f5002480
      protected SoundEvent getAmbientSound() {
          return SoundEvents.DONKEY_AMBIENT;
 diff --git a/src/main/java/net/minecraft/world/entity/animal/horse/Horse.java b/src/main/java/net/minecraft/world/entity/animal/horse/Horse.java
-index 97a92b5576da2f8572a71cab42c40d1368ecb300..b1f34ab6e747465df2299b5dd0036d5197397af2 100644
+index 79a2b3c8df70a9a73ad44560a4a6129f91db8e16..9d8879fc2f7afafdd42cd8ee471c698b31159209 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/horse/Horse.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/horse/Horse.java
 @@ -40,6 +40,13 @@ public class Horse extends AbstractHorse implements VariantHolder<Variant> {
@@ -2564,16 +2509,16 @@ index 97a92b5576da2f8572a71cab42c40d1368ecb300..b1f34ab6e747465df2299b5dd0036d51
  
 +    // Purpur start
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.horseRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.horseRidableInWater;
 +    }
 +    // Purpur end
 +
      @Override
      protected void randomizeAttributes(RandomSource random) {
-         this.getAttribute(Attributes.MAX_HEALTH).setBaseValue((double)this.generateRandomMaxHealth(random));
+         this.getAttribute(Attributes.MAX_HEALTH).setBaseValue((double)generateMaxHealth(random::nextInt));
 diff --git a/src/main/java/net/minecraft/world/entity/animal/horse/Llama.java b/src/main/java/net/minecraft/world/entity/animal/horse/Llama.java
-index 7ae0e4b3aa8e861500ddc7b38aa671258b532fcd..419c458f15fb421c5cd6df98b8e74391915d647d 100644
+index 7ae0e4b3aa8e861500ddc7b38aa671258b532fcd..42861ddab4397187eb6a5d4a729bc58e6fc7ddeb 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/horse/Llama.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/horse/Llama.java
 @@ -76,7 +76,51 @@ public class Llama extends AbstractChestedHorse implements VariantHolder<Llama.V
@@ -2611,8 +2556,8 @@ index 7ae0e4b3aa8e861500ddc7b38aa671258b532fcd..419c458f15fb421c5cd6df98b8e74391
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.llamaRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.llamaRidableInWater;
 +    }
 +
 +    @Override
@@ -2645,7 +2590,7 @@ index 7ae0e4b3aa8e861500ddc7b38aa671258b532fcd..419c458f15fb421c5cd6df98b8e74391
          this.targetSelector.addGoal(2, new Llama.LlamaAttackWolfGoal(this));
      }
 diff --git a/src/main/java/net/minecraft/world/entity/animal/horse/Mule.java b/src/main/java/net/minecraft/world/entity/animal/horse/Mule.java
-index a6601f70890f90691923c0e6a9f10ea597ccabc2..aa644005b9347b4b409756b2fd7a3587050b3ad1 100644
+index a6601f70890f90691923c0e6a9f10ea597ccabc2..84d265aaa4a2c5942e3ca04deab644570bb8ee83 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/horse/Mule.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/horse/Mule.java
 @@ -14,6 +14,13 @@ public class Mule extends AbstractChestedHorse {
@@ -2654,8 +2599,8 @@ index a6601f70890f90691923c0e6a9f10ea597ccabc2..aa644005b9347b4b409756b2fd7a3587
  
 +    // Purpur start
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.muleRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.muleRidableInWater;
 +    }
 +    // Purpur end
 +
@@ -2663,7 +2608,7 @@ index a6601f70890f90691923c0e6a9f10ea597ccabc2..aa644005b9347b4b409756b2fd7a3587
      protected SoundEvent getAmbientSound() {
          return SoundEvents.MULE_AMBIENT;
 diff --git a/src/main/java/net/minecraft/world/entity/animal/horse/SkeletonHorse.java b/src/main/java/net/minecraft/world/entity/animal/horse/SkeletonHorse.java
-index 5771e262bde9558e2699f689d9dc045600192c88..aabe89e1807e87b18cc9189280d33fe9888c7130 100644
+index c952190181ad6ea090c4b91c3bf51db45ed3e5ae..7c891be8b94a6438910a53c0473393d49b19f5d9 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/horse/SkeletonHorse.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/horse/SkeletonHorse.java
 @@ -28,6 +28,13 @@ public class SkeletonHorse extends AbstractHorse {
@@ -2688,17 +2633,8 @@ index 5771e262bde9558e2699f689d9dc045600192c88..aabe89e1807e87b18cc9189280d33fe9
      }
  
      @Override
-@@ -131,7 +139,7 @@ public class SkeletonHorse extends AbstractHorse {
- 
-     @Override
-     public boolean rideableUnderWater() {
--        return true;
-+        return level.purpurConfig.skeletonHorseRidableInWater; // Purpur
-     }
- 
-     @Override
 diff --git a/src/main/java/net/minecraft/world/entity/animal/horse/TraderLlama.java b/src/main/java/net/minecraft/world/entity/animal/horse/TraderLlama.java
-index 691f85a508c0b79b95b88c7e3118f02ec92a5123..c525b0bc39f90e9ada137e9e4bc3e926a9622007 100644
+index 691f85a508c0b79b95b88c7e3118f02ec92a5123..6747dbd11a883249f18cd51320daa663d6203bb7 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/horse/TraderLlama.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/horse/TraderLlama.java
 @@ -27,6 +27,28 @@ public class TraderLlama extends Llama {
@@ -2712,8 +2648,8 @@ index 691f85a508c0b79b95b88c7e3118f02ec92a5123..c525b0bc39f90e9ada137e9e4bc3e926
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.traderLlamaRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.traderLlamaRidableInWater;
 +    }
 +
 +    @Override
@@ -2731,7 +2667,7 @@ index 691f85a508c0b79b95b88c7e3118f02ec92a5123..c525b0bc39f90e9ada137e9e4bc3e926
      public boolean isTraderLlama() {
          return true;
 diff --git a/src/main/java/net/minecraft/world/entity/animal/horse/ZombieHorse.java b/src/main/java/net/minecraft/world/entity/animal/horse/ZombieHorse.java
-index fccfb5f55277d39a1dbd8ab8060c8664f5a23e13..a71b4979c1acb272efe3e5eddae05768e98dfca3 100644
+index e2935115c8d41af1d623da4f0d4f73de80386129..b6e2e7398413296449e8f132a2a6296da231f4d4 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/horse/ZombieHorse.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/horse/ZombieHorse.java
 @@ -21,6 +21,18 @@ public class ZombieHorse extends AbstractHorse {
@@ -2740,8 +2676,8 @@ index fccfb5f55277d39a1dbd8ab8060c8664f5a23e13..a71b4979c1acb272efe3e5eddae05768
  
 +    // Purpur start
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.zombieHorseRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.zombieHorseRidableInWater;
 +    }
 +
 +    @Override
@@ -2760,6 +2696,43 @@ index fccfb5f55277d39a1dbd8ab8060c8664f5a23e13..a71b4979c1acb272efe3e5eddae05768
 +        if (level.purpurConfig.zombieHorseCanSwim) goalSelector.addGoal(0, new net.minecraft.world.entity.ai.goal.FloatGoal(this)); // Purpur
      }
  }
+diff --git a/src/main/java/net/minecraft/world/entity/animal/sniffer/Sniffer.java b/src/main/java/net/minecraft/world/entity/animal/sniffer/Sniffer.java
+index f6e2348b280eaefc0eb05bf5d962593caa654357..ea0f568819994da042ba3182a66cc6ea2c4287bd 100644
+--- a/src/main/java/net/minecraft/world/entity/animal/sniffer/Sniffer.java
++++ b/src/main/java/net/minecraft/world/entity/animal/sniffer/Sniffer.java
+@@ -81,6 +81,23 @@ public class Sniffer extends Animal {
+         this.setPathfindingMalus(BlockPathTypes.WATER, -2.0F);
+     }
+ 
++    // Purpur start
++    @Override
++    public boolean isRidable() {
++        return level.purpurConfig.snifferRidable;
++    }
++
++    @Override
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.snifferRidableInWater;
++    }
++
++    @Override
++    public boolean isControllable() {
++        return level.purpurConfig.snifferControllable;
++    }
++    // Purpur end
++
+     // CraftBukkit start - SPIGOT-7295: moved from constructor to appropriate location
+     @Override
+     protected void defineSynchedData() {
+@@ -303,7 +320,7 @@ public class Sniffer extends Animal {
+     }
+ 
+     @Override
+-    protected void jumpFromGround() {
++    public void jumpFromGround() { // Purpur - protected -> public
+         super.jumpFromGround();
+         double d0 = this.moveControl.getSpeedModifier();
+ 
 diff --git a/src/main/java/net/minecraft/world/entity/boss/EnderDragonPart.java b/src/main/java/net/minecraft/world/entity/boss/EnderDragonPart.java
 index de84a00ce2d2b7c654b08164489624e124568346..998c72513df1dcd2b1316b320b3d5e7ca8e69fd4 100644
 --- a/src/main/java/net/minecraft/world/entity/boss/EnderDragonPart.java
@@ -2779,10 +2752,10 @@ index de84a00ce2d2b7c654b08164489624e124568346..998c72513df1dcd2b1316b320b3d5e7c
      protected void defineSynchedData() {
      }
 diff --git a/src/main/java/net/minecraft/world/entity/boss/enderdragon/EnderDragon.java b/src/main/java/net/minecraft/world/entity/boss/enderdragon/EnderDragon.java
-index c7caaebfb4b9f28cbe700d88fdcf232a500e8ca7..7506ba57b1e5488d50ee577ed6147e7f05e0faa3 100644
+index 3f66986948d0b43a75454389b7ec8517e2d50899..165f3a058caf6ce5fd346b7f46969b67ea75f003 100644
 --- a/src/main/java/net/minecraft/world/entity/boss/enderdragon/EnderDragon.java
 +++ b/src/main/java/net/minecraft/world/entity/boss/enderdragon/EnderDragon.java
-@@ -103,6 +103,7 @@ public class EnderDragon extends Mob implements Enemy {
+@@ -104,6 +104,7 @@ public class EnderDragon extends Mob implements Enemy {
      @Nullable
      private BlockPos podium;
      // Paper end
@@ -2790,10 +2763,11 @@ index c7caaebfb4b9f28cbe700d88fdcf232a500e8ca7..7506ba57b1e5488d50ee577ed6147e7f
  
      public EnderDragon(EntityType<? extends EnderDragon> entitytypes, Level world) {
          super(EntityType.ENDER_DRAGON, world);
-@@ -117,8 +118,50 @@ public class EnderDragon extends Mob implements Enemy {
+@@ -118,9 +119,50 @@ public class EnderDragon extends Mob implements Enemy {
          }
  
          this.phaseManager = new EnderDragonPhaseManager(this);
+-        this.explosionSource = new Explosion(world, this, null, null, Double.NaN, Double.NaN, Double.NaN, Float.NaN, true, Explosion.BlockInteraction.DESTROY); // CraftBukkit
 +
 +        // Purpur start
 +        this.moveControl = new org.purpurmc.purpur.controller.FlyingMoveControllerWASD(this) {
@@ -2823,8 +2797,8 @@ index c7caaebfb4b9f28cbe700d88fdcf232a500e8ca7..7506ba57b1e5488d50ee577ed6147e7f
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.enderDragonRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.enderDragonRidableInWater;
      }
  
 +    @Override
@@ -2841,7 +2815,7 @@ index c7caaebfb4b9f28cbe700d88fdcf232a500e8ca7..7506ba57b1e5488d50ee577ed6147e7f
      public static AttributeSupplier.Builder createAttributes() {
          return Mob.createMobAttributes().add(Attributes.MAX_HEALTH, 200.0D);
      }
-@@ -180,6 +223,37 @@ public class EnderDragon extends Mob implements Enemy {
+@@ -182,6 +224,37 @@ public class EnderDragon extends Mob implements Enemy {
  
      @Override
      public void aiStep() {
@@ -2879,7 +2853,7 @@ index c7caaebfb4b9f28cbe700d88fdcf232a500e8ca7..7506ba57b1e5488d50ee577ed6147e7f
          this.processFlappingMovement();
          if (this.level.isClientSide) {
              this.setHealth(this.getHealth());
-@@ -193,6 +267,8 @@ public class EnderDragon extends Mob implements Enemy {
+@@ -195,6 +268,8 @@ public class EnderDragon extends Mob implements Enemy {
          float f;
  
          if (this.isDeadOrDying()) {
@@ -2888,7 +2862,7 @@ index c7caaebfb4b9f28cbe700d88fdcf232a500e8ca7..7506ba57b1e5488d50ee577ed6147e7f
              float f1 = (this.random.nextFloat() - 0.5F) * 8.0F;
  
              f = (this.random.nextFloat() - 0.5F) * 4.0F;
-@@ -205,9 +281,9 @@ public class EnderDragon extends Mob implements Enemy {
+@@ -207,9 +282,9 @@ public class EnderDragon extends Mob implements Enemy {
  
              f = 0.2F / ((float) vec3d.horizontalDistance() * 10.0F + 1.0F);
              f *= (float) Math.pow(2.0D, vec3d.y);
@@ -2900,7 +2874,7 @@ index c7caaebfb4b9f28cbe700d88fdcf232a500e8ca7..7506ba57b1e5488d50ee577ed6147e7f
                  this.flapTime += f * 0.5F;
              } else {
                  this.flapTime += f;
-@@ -252,7 +328,7 @@ public class EnderDragon extends Mob implements Enemy {
+@@ -254,7 +329,7 @@ public class EnderDragon extends Mob implements Enemy {
                      }
  
                      this.phaseManager.getCurrentPhase().doClientTick();
@@ -2909,7 +2883,7 @@ index c7caaebfb4b9f28cbe700d88fdcf232a500e8ca7..7506ba57b1e5488d50ee577ed6147e7f
                      DragonPhaseInstance idragoncontroller = this.phaseManager.getCurrentPhase();
  
                      idragoncontroller.doServerTick();
-@@ -321,7 +397,7 @@ public class EnderDragon extends Mob implements Enemy {
+@@ -323,7 +398,7 @@ public class EnderDragon extends Mob implements Enemy {
                  this.tickPart(this.body, (double) (f11 * 0.5F), 0.0D, (double) (-f12 * 0.5F));
                  this.tickPart(this.wing1, (double) (f12 * 4.5F), 2.0D, (double) (f11 * 4.5F));
                  this.tickPart(this.wing2, (double) (f12 * -4.5F), 2.0D, (double) (f11 * -4.5F));
@@ -2918,7 +2892,7 @@ index c7caaebfb4b9f28cbe700d88fdcf232a500e8ca7..7506ba57b1e5488d50ee577ed6147e7f
                      this.knockBack(this.level.getEntities((Entity) this, this.wing1.getBoundingBox().inflate(4.0D, 2.0D, 4.0D).move(0.0D, -2.0D, 0.0D), EntitySelector.NO_CREATIVE_OR_SPECTATOR));
                      this.knockBack(this.level.getEntities((Entity) this, this.wing2.getBoundingBox().inflate(4.0D, 2.0D, 4.0D).move(0.0D, -2.0D, 0.0D), EntitySelector.NO_CREATIVE_OR_SPECTATOR));
                      this.hurt(this.level.getEntities((Entity) this, this.head.getBoundingBox().inflate(1.0D), EntitySelector.NO_CREATIVE_OR_SPECTATOR));
-@@ -365,7 +441,7 @@ public class EnderDragon extends Mob implements Enemy {
+@@ -367,7 +442,7 @@ public class EnderDragon extends Mob implements Enemy {
                  }
  
                  if (!this.level.isClientSide) {
@@ -2928,10 +2902,10 @@ index c7caaebfb4b9f28cbe700d88fdcf232a500e8ca7..7506ba57b1e5488d50ee577ed6147e7f
                          this.dragonFight.updateDragon(this);
                      }
 diff --git a/src/main/java/net/minecraft/world/entity/boss/wither/WitherBoss.java b/src/main/java/net/minecraft/world/entity/boss/wither/WitherBoss.java
-index b781c849737225c00f1dd8d45a6d08cebc000263..7b715180a95e6990581ce28621f2176078ba14c2 100644
+index e81e8f050bd9df34b6a64c741428503b434f03a3..1001ef99f28a4f4f29e48d6ae9e3cb1bcfa27686 100644
 --- a/src/main/java/net/minecraft/world/entity/boss/wither/WitherBoss.java
 +++ b/src/main/java/net/minecraft/world/entity/boss/wither/WitherBoss.java
-@@ -83,16 +83,30 @@ public class WitherBoss extends Monster implements PowerableMob, RangedAttackMob
+@@ -84,16 +84,30 @@ public class WitherBoss extends Monster implements PowerableMob, RangedAttackMob
          return entityliving.getMobType() != MobType.UNDEAD && entityliving.attackable();
      };
      private static final TargetingConditions TARGETING_CONDITIONS = TargetingConditions.forCombat().range(20.0D).selector(WitherBoss.LIVING_ENTITY_SELECTOR);
@@ -2963,7 +2937,7 @@ index b781c849737225c00f1dd8d45a6d08cebc000263..7b715180a95e6990581ce28621f21760
          this.setHealth(this.getMaxHealth());
          this.xpReward = 50;
      }
-@@ -107,13 +121,119 @@ public class WitherBoss extends Monster implements PowerableMob, RangedAttackMob
+@@ -108,13 +122,119 @@ public class WitherBoss extends Monster implements PowerableMob, RangedAttackMob
          return navigationflying;
      }
  
@@ -2974,8 +2948,8 @@ index b781c849737225c00f1dd8d45a6d08cebc000263..7b715180a95e6990581ce28621f21760
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.witherRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.witherRidableInWater;
 +    }
 +
 +    @Override
@@ -3083,7 +3057,7 @@ index b781c849737225c00f1dd8d45a6d08cebc000263..7b715180a95e6990581ce28621f21760
          this.targetSelector.addGoal(1, new HurtByTargetGoal(this, new Class[0]));
          this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, LivingEntity.class, 0, false, false, WitherBoss.LIVING_ENTITY_SELECTOR));
      }
-@@ -255,6 +375,16 @@ public class WitherBoss extends Monster implements PowerableMob, RangedAttackMob
+@@ -256,6 +376,16 @@ public class WitherBoss extends Monster implements PowerableMob, RangedAttackMob
  
      @Override
      protected void customServerAiStep() {
@@ -3100,7 +3074,7 @@ index b781c849737225c00f1dd8d45a6d08cebc000263..7b715180a95e6990581ce28621f21760
          int i;
  
          if (this.getInvulnerableTicks() > 0) {
-@@ -580,11 +710,11 @@ public class WitherBoss extends Monster implements PowerableMob, RangedAttackMob
+@@ -576,11 +706,11 @@ public class WitherBoss extends Monster implements PowerableMob, RangedAttackMob
      }
  
      public int getAlternativeTarget(int headIndex) {
@@ -3115,10 +3089,10 @@ index b781c849737225c00f1dd8d45a6d08cebc000263..7b715180a95e6990581ce28621f21760
  
      @Override
 diff --git a/src/main/java/net/minecraft/world/entity/monster/AbstractSkeleton.java b/src/main/java/net/minecraft/world/entity/monster/AbstractSkeleton.java
-index b8abee145fc92faddef98da913eca7715b6bfc03..8cc4f6a4e8ef66c4e799a0e5bdb4ddc5466007e6 100644
+index f2094c52196b45adfd51d8aebcc4c46b779b0925..8fad4a642e2d430ad4b195f77422ba6855be1d63 100644
 --- a/src/main/java/net/minecraft/world/entity/monster/AbstractSkeleton.java
 +++ b/src/main/java/net/minecraft/world/entity/monster/AbstractSkeleton.java
-@@ -69,12 +69,14 @@ public abstract class AbstractSkeleton extends Monster implements RangedAttackMo
+@@ -70,12 +70,14 @@ public abstract class AbstractSkeleton extends Monster implements RangedAttackMo
  
      @Override
      protected void registerGoals() {
@@ -3134,7 +3108,7 @@ index b8abee145fc92faddef98da913eca7715b6bfc03..8cc4f6a4e8ef66c4e799a0e5bdb4ddc5
          this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true));
          this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, IronGolem.class, true));
 diff --git a/src/main/java/net/minecraft/world/entity/monster/Blaze.java b/src/main/java/net/minecraft/world/entity/monster/Blaze.java
-index 4595b734abb88df7da6dddf7b24c6c5ffcf6556a..d195edea9b898e230d7837b8ab4eb7c5d4ddfaf2 100644
+index 5ae34ded698e501dc5cb97b1d7028863e95742a1..4fe550dc61b64b6c16731a5bf21d4144f3e257c0 100644
 --- a/src/main/java/net/minecraft/world/entity/monster/Blaze.java
 +++ b/src/main/java/net/minecraft/world/entity/monster/Blaze.java
 @@ -32,6 +32,7 @@ public class Blaze extends Monster {
@@ -3156,8 +3130,8 @@ index 4595b734abb88df7da6dddf7b24c6c5ffcf6556a..d195edea9b898e230d7837b8ab4eb7c5
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.blazeRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.blazeRidableInWater;
 +    }
 +
 +    @Override
@@ -3218,7 +3192,7 @@ index 4595b734abb88df7da6dddf7b24c6c5ffcf6556a..d195edea9b898e230d7837b8ab4eb7c5
          if (this.nextHeightOffsetChangeTick <= 0) {
              this.nextHeightOffsetChangeTick = 100;
 diff --git a/src/main/java/net/minecraft/world/entity/monster/CaveSpider.java b/src/main/java/net/minecraft/world/entity/monster/CaveSpider.java
-index d980b906d9206560741576fa4153c57212f307a0..790d4abbc8e0b288e20e72e63f8190e938e2fecb 100644
+index d980b906d9206560741576fa4153c57212f307a0..2795153f9f27ab0017dd29dc6d90737e890d6a6e 100644
 --- a/src/main/java/net/minecraft/world/entity/monster/CaveSpider.java
 +++ b/src/main/java/net/minecraft/world/entity/monster/CaveSpider.java
 @@ -28,6 +28,23 @@ public class CaveSpider extends Spider {
@@ -3232,8 +3206,8 @@ index d980b906d9206560741576fa4153c57212f307a0..790d4abbc8e0b288e20e72e63f8190e9
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.caveSpiderRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.caveSpiderRidableInWater;
 +    }
 +
 +    @Override
@@ -3246,7 +3220,7 @@ index d980b906d9206560741576fa4153c57212f307a0..790d4abbc8e0b288e20e72e63f8190e9
      public boolean doHurtTarget(Entity target) {
          if (super.doHurtTarget(target)) {
 diff --git a/src/main/java/net/minecraft/world/entity/monster/Creeper.java b/src/main/java/net/minecraft/world/entity/monster/Creeper.java
-index 338161d2eb15d9264027961b71678b8d2f020fd8..324173e0b97a3f5ed657f876f1723a909eb7f0da 100644
+index 29c62525241e2e03686d1bceee740d4f54f33c54..a3b52b0aa442a2c69f8bec7004db5ea913919d30 100644
 --- a/src/main/java/net/minecraft/world/entity/monster/Creeper.java
 +++ b/src/main/java/net/minecraft/world/entity/monster/Creeper.java
 @@ -59,21 +59,98 @@ public class Creeper extends Monster implements PowerableMob {
@@ -3270,8 +3244,8 @@ index 338161d2eb15d9264027961b71678b8d2f020fd8..324173e0b97a3f5ed657f876f1723a90
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.creeperRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.creeperRidableInWater;
 +    }
 +
 +    @Override
@@ -3348,7 +3322,7 @@ index 338161d2eb15d9264027961b71678b8d2f020fd8..324173e0b97a3f5ed657f876f1723a90
          this.targetSelector.addGoal(1, new NearestAttackableTargetGoal<>(this, Player.class, true));
          this.targetSelector.addGoal(2, new HurtByTargetGoal(this, new Class[0]));
      }
-@@ -324,6 +401,7 @@ public class Creeper extends Monster implements PowerableMob {
+@@ -322,6 +399,7 @@ public class Creeper extends Monster implements PowerableMob {
              com.destroystokyo.paper.event.entity.CreeperIgniteEvent event = new com.destroystokyo.paper.event.entity.CreeperIgniteEvent((org.bukkit.entity.Creeper) getBukkitEntity(), ignited);
              if (event.callEvent()) {
                  this.entityData.set(Creeper.DATA_IS_IGNITED, event.isIgnited());
@@ -3357,7 +3331,7 @@ index 338161d2eb15d9264027961b71678b8d2f020fd8..324173e0b97a3f5ed657f876f1723a90
          }
          // Paper end
 diff --git a/src/main/java/net/minecraft/world/entity/monster/Drowned.java b/src/main/java/net/minecraft/world/entity/monster/Drowned.java
-index 1b1305f5eaf5710b72c57ab4c3953e703a23f1e0..869a2ee5e0775cc477fb56063dfa4ce4a0c6e3f2 100644
+index f00773e05654bdeb5463f448293aac99d2208813..4d1d5a7608e20d684c1942c9c241c84cd7097d96 100644
 --- a/src/main/java/net/minecraft/world/entity/monster/Drowned.java
 +++ b/src/main/java/net/minecraft/world/entity/monster/Drowned.java
 @@ -68,6 +68,23 @@ public class Drowned extends Zombie implements RangedAttackMob {
@@ -3371,8 +3345,8 @@ index 1b1305f5eaf5710b72c57ab4c3953e703a23f1e0..869a2ee5e0775cc477fb56063dfa4ce4
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.drownedRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.drownedRidableInWater;
 +    }
 +
 +    @Override
@@ -3384,7 +3358,7 @@ index 1b1305f5eaf5710b72c57ab4c3953e703a23f1e0..869a2ee5e0775cc477fb56063dfa4ce4
      @Override
      protected void addBehaviourGoals() {
          this.goalSelector.addGoal(1, new Drowned.DrownedGoToWaterGoal(this, 1.0D));
-@@ -254,8 +271,7 @@ public class Drowned extends Zombie implements RangedAttackMob {
+@@ -259,8 +276,7 @@ public class Drowned extends Zombie implements RangedAttackMob {
          this.searchingForLand = targetingUnderwater;
      }
  
@@ -3394,7 +3368,7 @@ index 1b1305f5eaf5710b72c57ab4c3953e703a23f1e0..869a2ee5e0775cc477fb56063dfa4ce4
          private final Drowned drowned;
  
          public DrownedMoveControl(Drowned drowned) {
-@@ -264,7 +280,7 @@ public class Drowned extends Zombie implements RangedAttackMob {
+@@ -269,7 +285,7 @@ public class Drowned extends Zombie implements RangedAttackMob {
          }
  
          @Override
@@ -3403,7 +3377,7 @@ index 1b1305f5eaf5710b72c57ab4c3953e703a23f1e0..869a2ee5e0775cc477fb56063dfa4ce4
              LivingEntity entityliving = this.drowned.getTarget();
  
              if (this.drowned.wantsToSwim() && this.drowned.isInWater()) {
-@@ -287,7 +303,7 @@ public class Drowned extends Zombie implements RangedAttackMob {
+@@ -292,7 +308,7 @@ public class Drowned extends Zombie implements RangedAttackMob {
  
                  this.drowned.setYRot(this.rotlerp(this.drowned.getYRot(), f, 90.0F));
                  this.drowned.yBodyRot = this.drowned.getYRot();
@@ -3412,7 +3386,7 @@ index 1b1305f5eaf5710b72c57ab4c3953e703a23f1e0..869a2ee5e0775cc477fb56063dfa4ce4
                  float f2 = Mth.lerp(0.125F, this.drowned.getSpeed(), f1);
  
                  this.drowned.setSpeed(f2);
-@@ -297,7 +313,7 @@ public class Drowned extends Zombie implements RangedAttackMob {
+@@ -302,7 +318,7 @@ public class Drowned extends Zombie implements RangedAttackMob {
                      this.drowned.setDeltaMovement(this.drowned.getDeltaMovement().add(0.0D, -0.008D, 0.0D));
                  }
  
@@ -3422,10 +3396,10 @@ index 1b1305f5eaf5710b72c57ab4c3953e703a23f1e0..869a2ee5e0775cc477fb56063dfa4ce4
  
          }
 diff --git a/src/main/java/net/minecraft/world/entity/monster/ElderGuardian.java b/src/main/java/net/minecraft/world/entity/monster/ElderGuardian.java
-index d02286d553c600fe7e75f48e278e380d21c5b868..82b03488178962eb74fe252d561ba8cee32eda95 100644
+index d02286d553c600fe7e75f48e278e380d21c5b868..4fbae6e88daaabfce22bb9d6e60e02a109e5178a 100644
 --- a/src/main/java/net/minecraft/world/entity/monster/ElderGuardian.java
 +++ b/src/main/java/net/minecraft/world/entity/monster/ElderGuardian.java
-@@ -33,6 +33,23 @@ public class ElderGuardian extends Guardian {
+@@ -33,6 +33,18 @@ public class ElderGuardian extends Guardian {
  
      }
  
@@ -3433,11 +3407,6 @@ index d02286d553c600fe7e75f48e278e380d21c5b868..82b03488178962eb74fe252d561ba8ce
 +    @Override
 +    public boolean isRidable() {
 +        return level.purpurConfig.elderGuardianRidable;
-+    }
-+
-+    @Override
-+    public boolean rideableUnderWater() {
-+        return true;
 +    }
 +
 +    @Override
@@ -3450,7 +3419,7 @@ index d02286d553c600fe7e75f48e278e380d21c5b868..82b03488178962eb74fe252d561ba8ce
          return Guardian.createAttributes().add(Attributes.MOVEMENT_SPEED, 0.30000001192092896D).add(Attributes.ATTACK_DAMAGE, 8.0D).add(Attributes.MAX_HEALTH, 80.0D);
      }
 diff --git a/src/main/java/net/minecraft/world/entity/monster/EnderMan.java b/src/main/java/net/minecraft/world/entity/monster/EnderMan.java
-index ff0e09a7387e7dc9ca136d3e48e640b9e9cb4bf3..8f8c40d5265f9e124a255af92eb43b51322ffd74 100644
+index c2f5dabb41b172547864decc06aa632d89dff3e1..d1e6b930fe393c4e3c52749819373cc98092aa20 100644
 --- a/src/main/java/net/minecraft/world/entity/monster/EnderMan.java
 +++ b/src/main/java/net/minecraft/world/entity/monster/EnderMan.java
 @@ -92,9 +92,27 @@ public class EnderMan extends Monster implements NeutralMob {
@@ -3464,8 +3433,8 @@ index ff0e09a7387e7dc9ca136d3e48e640b9e9cb4bf3..8f8c40d5265f9e124a255af92eb43b51
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.endermanRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.endermanRidableInWater;
 +    }
 +
 +    @Override
@@ -3503,11 +3472,11 @@ index ff0e09a7387e7dc9ca136d3e48e640b9e9cb4bf3..8f8c40d5265f9e124a255af92eb43b51
          if (this.isInvulnerableTo(source)) {
              return false;
 +        } else if (getRider() != null && this.isControllable()) { return super.hurt(source, amount); // Purpur - no teleporting on damage
-         } else if (source instanceof IndirectEntityDamageSource) {
-             Entity entity = source.getDirectEntity();
-             boolean flag;
+         } else {
+             boolean flag = source.getDirectEntity() instanceof ThrownPotion;
+             boolean flag1;
 diff --git a/src/main/java/net/minecraft/world/entity/monster/Endermite.java b/src/main/java/net/minecraft/world/entity/monster/Endermite.java
-index e8c3972b889fd6b348a5b0d18444d28faa813879..9af512ac1147c7be9afeb2e1b767f3455d366b79 100644
+index e8c3972b889fd6b348a5b0d18444d28faa813879..4b24821b3161e448da76b6484df7bcb66cfc0acc 100644
 --- a/src/main/java/net/minecraft/world/entity/monster/Endermite.java
 +++ b/src/main/java/net/minecraft/world/entity/monster/Endermite.java
 @@ -37,14 +37,33 @@ public class Endermite extends Monster {
@@ -3521,8 +3490,8 @@ index e8c3972b889fd6b348a5b0d18444d28faa813879..9af512ac1147c7be9afeb2e1b767f345
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.endermiteRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.endermiteRidableInWater;
 +    }
 +
 +    @Override
@@ -3545,7 +3514,7 @@ index e8c3972b889fd6b348a5b0d18444d28faa813879..9af512ac1147c7be9afeb2e1b767f345
          this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true));
      }
 diff --git a/src/main/java/net/minecraft/world/entity/monster/Evoker.java b/src/main/java/net/minecraft/world/entity/monster/Evoker.java
-index d16988e854c327e3c33b4c7c0d3546468526cfd0..13b81f03db31b9e5befe6f4618a0bb611bd69220 100644
+index 1935f1eb28724d8f03a9612a9b4ddefbbc557157..1482bddc996df22e9542e7934d99bfe29a325af0 100644
 --- a/src/main/java/net/minecraft/world/entity/monster/Evoker.java
 +++ b/src/main/java/net/minecraft/world/entity/monster/Evoker.java
 @@ -48,10 +48,28 @@ public class Evoker extends SpellcasterIllager {
@@ -3559,8 +3528,8 @@ index d16988e854c327e3c33b4c7c0d3546468526cfd0..13b81f03db31b9e5befe6f4618a0bb61
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.evokerRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.evokerRidableInWater;
 +    }
 +
 +    @Override
@@ -3586,7 +3555,7 @@ index d16988e854c327e3c33b4c7c0d3546468526cfd0..13b81f03db31b9e5befe6f4618a0bb61
          this.targetSelector.addGoal(2, (new NearestAttackableTargetGoal<>(this, Player.class, true)).setUnseenMemoryTicks(300));
          this.targetSelector.addGoal(3, (new NearestAttackableTargetGoal<>(this, AbstractVillager.class, false)).setUnseenMemoryTicks(300));
 diff --git a/src/main/java/net/minecraft/world/entity/monster/Ghast.java b/src/main/java/net/minecraft/world/entity/monster/Ghast.java
-index bb2cb17e4e5ce142eeec18951c8948e3d6b3209c..612ef4aa63b6076a69bfd830282394c49bff205a 100644
+index bb2cb17e4e5ce142eeec18951c8948e3d6b3209c..3a3dbf3721cae13b5e5cbc98aaf74b7ecd9e2263 100644
 --- a/src/main/java/net/minecraft/world/entity/monster/Ghast.java
 +++ b/src/main/java/net/minecraft/world/entity/monster/Ghast.java
 @@ -44,11 +44,47 @@ public class Ghast extends FlyingMob implements Enemy {
@@ -3600,8 +3569,8 @@ index bb2cb17e4e5ce142eeec18951c8948e3d6b3209c..612ef4aa63b6076a69bfd830282394c4
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.ghastRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.ghastRidableInWater;
 +    }
 +
 +    @Override
@@ -3665,7 +3634,7 @@ index bb2cb17e4e5ce142eeec18951c8948e3d6b3209c..612ef4aa63b6076a69bfd830282394c4
                  if (this.floatDuration-- <= 0) {
                      this.floatDuration += this.ghast.getRandom().nextInt(5) + 2;
 diff --git a/src/main/java/net/minecraft/world/entity/monster/Giant.java b/src/main/java/net/minecraft/world/entity/monster/Giant.java
-index 41004c28edb748e12c4f868aa07b4672891197c1..e310f4c451d751f4ce03562c9e3db3be313fa7db 100644
+index 41004c28edb748e12c4f868aa07b4672891197c1..6971cb46087aabcda66cd04c494a822886104b04 100644
 --- a/src/main/java/net/minecraft/world/entity/monster/Giant.java
 +++ b/src/main/java/net/minecraft/world/entity/monster/Giant.java
 @@ -14,6 +14,29 @@ public class Giant extends Monster {
@@ -3679,8 +3648,8 @@ index 41004c28edb748e12c4f868aa07b4672891197c1..e310f4c451d751f4ce03562c9e3db3be
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.giantRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.giantRidableInWater;
 +    }
 +
 +    @Override
@@ -3699,10 +3668,10 @@ index 41004c28edb748e12c4f868aa07b4672891197c1..e310f4c451d751f4ce03562c9e3db3be
      protected float getStandingEyeHeight(Pose pose, EntityDimensions dimensions) {
          return 10.440001F;
 diff --git a/src/main/java/net/minecraft/world/entity/monster/Guardian.java b/src/main/java/net/minecraft/world/entity/monster/Guardian.java
-index 2f43700c01a0f0a4749f56d3f6294cf648b10f51..01157172c06e022996b25ea0f566ebf703b2b3a8 100644
+index cf7e9c1db229f9e2cc05ce3046540db1d4fc4ec4..bf269b310e5b9554f36cf1d1188e20d3b195cb60 100644
 --- a/src/main/java/net/minecraft/world/entity/monster/Guardian.java
 +++ b/src/main/java/net/minecraft/world/entity/monster/Guardian.java
-@@ -65,14 +65,40 @@ public class Guardian extends Monster {
+@@ -69,15 +69,36 @@ public class Guardian extends Monster {
          this.xpReward = 10;
          this.setPathfindingMalus(BlockPathTypes.WATER, 0.0F);
          this.moveControl = new Guardian.GuardianMoveControl(this);
@@ -3725,11 +3694,6 @@ index 2f43700c01a0f0a4749f56d3f6294cf648b10f51..01157172c06e022996b25ea0f566ebf7
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return true;
-+    }
-+
-+    @Override
 +    public boolean isControllable() {
 +        return level.purpurConfig.guardianControllable;
 +    }
@@ -3737,39 +3701,40 @@ index 2f43700c01a0f0a4749f56d3f6294cf648b10f51..01157172c06e022996b25ea0f566ebf7
 +
      @Override
      protected void registerGoals() {
-         MoveTowardsRestrictionGoal moveTowardsRestrictionGoal = new MoveTowardsRestrictionGoal(this, 1.0D);
+         MoveTowardsRestrictionGoal pathfindergoalmovetowardsrestriction = new MoveTowardsRestrictionGoal(this, 1.0D);
+ 
          this.randomStrollGoal = new RandomStrollGoal(this, 1.0D, 80);
 +        this.goalSelector.addGoal(0, new org.purpurmc.purpur.entity.ai.HasRider(this)); // Purpur
-         this.goalSelector.addGoal(4, new Guardian.GuardianAttackGoal(this));
-         this.goalSelector.addGoal(5, moveTowardsRestrictionGoal);
+         this.goalSelector.addGoal(4, this.guardianAttackGoal = new Guardian.GuardianAttackGoal(this)); // CraftBukkit - assign field
+         this.goalSelector.addGoal(5, pathfindergoalmovetowardsrestriction);
          this.goalSelector.addGoal(7, this.randomStrollGoal);
-@@ -81,6 +107,7 @@ public class Guardian extends Monster {
+@@ -86,6 +107,7 @@ public class Guardian extends Monster {
          this.goalSelector.addGoal(9, new RandomLookAroundGoal(this));
          this.randomStrollGoal.setFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
-         moveTowardsRestrictionGoal.setFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
+         pathfindergoalmovetowardsrestriction.setFlags(EnumSet.of(Goal.Flag.MOVE, Goal.Flag.LOOK));
 +        this.targetSelector.addGoal(0, new org.purpurmc.purpur.entity.ai.HasRider(this)); // Purpur
          this.targetSelector.addGoal(1, new NearestAttackableTargetGoal<>(this, LivingEntity.class, 10, true, false, new Guardian.GuardianAttackSelector(this)));
      }
  
-@@ -330,7 +357,7 @@ public class Guardian extends Monster {
+@@ -351,7 +373,7 @@ public class Guardian extends Monster {
      @Override
      public void travel(Vec3 movementInput) {
-         if (this.isEffectiveAi() && this.isInWater()) {
+         if (this.isControlledByLocalInstance() && this.isInWater()) {
 -            this.moveRelative(0.1F, movementInput);
 +            this.moveRelative(getRider() != null && this.isControllable() ? getSpeed() : 0.1F, movementInput); // Purpur
              this.move(MoverType.SELF, this.getDeltaMovement());
              this.setDeltaMovement(this.getDeltaMovement().scale(0.9D));
              if (!this.isMoving() && this.getTarget() == null) {
-@@ -437,7 +464,7 @@ public class Guardian extends Monster {
-         }
+@@ -363,7 +385,7 @@ public class Guardian extends Monster {
+ 
      }
  
--    static class GuardianMoveControl extends MoveControl {
-+    static class GuardianMoveControl extends org.purpurmc.purpur.controller.WaterMoveControllerWASD { // Purpur
+-    private static class GuardianMoveControl extends MoveControl {
++    private static class GuardianMoveControl extends org.purpurmc.purpur.controller.WaterMoveControllerWASD { // Purpur
+ 
          private final Guardian guardian;
  
-         public GuardianMoveControl(Guardian guardian) {
-@@ -445,8 +472,17 @@ public class Guardian extends Monster {
+@@ -372,8 +394,17 @@ public class Guardian extends Monster {
              this.guardian = guardian;
          }
  
@@ -3786,19 +3751,19 @@ index 2f43700c01a0f0a4749f56d3f6294cf648b10f51..01157172c06e022996b25ea0f566ebf7
 +        @Override
 +        public void vanillaTick() { // Purpur
              if (this.operation == MoveControl.Operation.MOVE_TO && !this.guardian.getNavigation().isDone()) {
-                 Vec3 vec3 = new Vec3(this.wantedX - this.guardian.getX(), this.wantedY - this.guardian.getY(), this.wantedZ - this.guardian.getZ());
-                 double d = vec3.length();
-@@ -456,7 +492,7 @@ public class Guardian extends Monster {
-                 float h = (float)(Mth.atan2(vec3.z, vec3.x) * (double)(180F / (float)Math.PI)) - 90.0F;
-                 this.guardian.setYRot(this.rotlerp(this.guardian.getYRot(), h, 90.0F));
+                 Vec3 vec3d = new Vec3(this.wantedX - this.guardian.getX(), this.wantedY - this.guardian.getY(), this.wantedZ - this.guardian.getZ());
+                 double d0 = vec3d.length();
+@@ -384,7 +415,7 @@ public class Guardian extends Monster {
+ 
+                 this.guardian.setYRot(this.rotlerp(this.guardian.getYRot(), f, 90.0F));
                  this.guardian.yBodyRot = this.guardian.getYRot();
--                float i = (float)(this.speedModifier * this.guardian.getAttributeValue(Attributes.MOVEMENT_SPEED));
-+                float i = (float)(this.getSpeedModifier() * this.guardian.getAttributeValue(Attributes.MOVEMENT_SPEED)); // Purpur
-                 float j = Mth.lerp(0.125F, this.guardian.getSpeed(), i);
-                 this.guardian.setSpeed(j);
-                 double k = Math.sin((double)(this.guardian.tickCount + this.guardian.getId()) * 0.5D) * 0.05D;
+-                float f1 = (float) (this.speedModifier * this.guardian.getAttributeValue(Attributes.MOVEMENT_SPEED));
++                float f1 = (float) (this.getSpeedModifier() * this.guardian.getAttributeValue(Attributes.MOVEMENT_SPEED)); // Purpur
+                 float f2 = Mth.lerp(0.125F, this.guardian.getSpeed(), f1);
+ 
+                 this.guardian.setSpeed(f2);
 diff --git a/src/main/java/net/minecraft/world/entity/monster/Husk.java b/src/main/java/net/minecraft/world/entity/monster/Husk.java
-index 4996347c6dde85a2dc9aa37fdf495160093fac64..87e77fe01c9ffbbc6bcc2f8d4c10545481155bf0 100644
+index 4996347c6dde85a2dc9aa37fdf495160093fac64..1e2bc8b2c90599134d513e9062a2fb81c7c046b1 100644
 --- a/src/main/java/net/minecraft/world/entity/monster/Husk.java
 +++ b/src/main/java/net/minecraft/world/entity/monster/Husk.java
 @@ -22,6 +22,23 @@ public class Husk extends Zombie {
@@ -3812,8 +3777,8 @@ index 4996347c6dde85a2dc9aa37fdf495160093fac64..87e77fe01c9ffbbc6bcc2f8d4c105454
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.huskRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.huskRidableInWater;
 +    }
 +
 +    @Override
@@ -3826,7 +3791,7 @@ index 4996347c6dde85a2dc9aa37fdf495160093fac64..87e77fe01c9ffbbc6bcc2f8d4c105454
          return checkMonsterSpawnRules(type, world, spawnReason, pos, random) && (spawnReason == MobSpawnType.SPAWNER || world.canSeeSky(pos));
      }
 diff --git a/src/main/java/net/minecraft/world/entity/monster/Illusioner.java b/src/main/java/net/minecraft/world/entity/monster/Illusioner.java
-index 86f7fdd42461db151221d2c0d5cff6953392fa80..98c85e31a2238cbfa31c12214ade49c4ba181702 100644
+index 10573602c9bc73713cbd6989762d3dbb6f6fcf8c..91e048a14366aec2142ca36c3a8081eea6af0052 100644
 --- a/src/main/java/net/minecraft/world/entity/monster/Illusioner.java
 +++ b/src/main/java/net/minecraft/world/entity/monster/Illusioner.java
 @@ -59,10 +59,28 @@ public class Illusioner extends SpellcasterIllager implements RangedAttackMob {
@@ -3840,8 +3805,8 @@ index 86f7fdd42461db151221d2c0d5cff6953392fa80..98c85e31a2238cbfa31c12214ade49c4
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.illusionerRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.illusionerRidableInWater;
 +    }
 +
 +    @Override
@@ -3867,7 +3832,7 @@ index 86f7fdd42461db151221d2c0d5cff6953392fa80..98c85e31a2238cbfa31c12214ade49c4
          this.targetSelector.addGoal(2, (new NearestAttackableTargetGoal<>(this, Player.class, true)).setUnseenMemoryTicks(300));
          this.targetSelector.addGoal(3, (new NearestAttackableTargetGoal<>(this, AbstractVillager.class, false)).setUnseenMemoryTicks(300));
 diff --git a/src/main/java/net/minecraft/world/entity/monster/MagmaCube.java b/src/main/java/net/minecraft/world/entity/monster/MagmaCube.java
-index ea4fa9eba301e462c159cdb970079f6d87d25f4d..3a2261687ec8b3b1f69b89ceeb2cc8cc524ab57a 100644
+index f23d8796aec3e02a3bb23f338903f39b6ef9dcf1..b51f11fe8366ba15e02083a50ee401e1f335fbb6 100644
 --- a/src/main/java/net/minecraft/world/entity/monster/MagmaCube.java
 +++ b/src/main/java/net/minecraft/world/entity/monster/MagmaCube.java
 @@ -25,6 +25,28 @@ public class MagmaCube extends Slime {
@@ -3881,8 +3846,8 @@ index ea4fa9eba301e462c159cdb970079f6d87d25f4d..3a2261687ec8b3b1f69b89ceeb2cc8cc
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.magmaCubeRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.magmaCubeRidableInWater;
 +    }
 +
 +    @Override
@@ -3913,7 +3878,7 @@ index ea4fa9eba301e462c159cdb970079f6d87d25f4d..3a2261687ec8b3b1f69b89ceeb2cc8cc
  
      @Override
 diff --git a/src/main/java/net/minecraft/world/entity/monster/Phantom.java b/src/main/java/net/minecraft/world/entity/monster/Phantom.java
-index aa8734856ec7b90036afad13bfda46c02e548812..3ee0905bc4d054fef76e1f02e618f06fa4339adc 100644
+index 97fb1d2110a51498f6419841081b500b3f190370..736610f5d1e180b4df68a9355adce9b8135268ff 100644
 --- a/src/main/java/net/minecraft/world/entity/monster/Phantom.java
 +++ b/src/main/java/net/minecraft/world/entity/monster/Phantom.java
 @@ -60,6 +60,64 @@ public class Phantom extends FlyingMob implements Enemy {
@@ -3927,8 +3892,8 @@ index aa8734856ec7b90036afad13bfda46c02e548812..3ee0905bc4d054fef76e1f02e618f06f
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.phantomRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.phantomRidableInWater;
 +    }
 +
 +    @Override
@@ -4001,7 +3966,7 @@ index aa8734856ec7b90036afad13bfda46c02e548812..3ee0905bc4d054fef76e1f02e618f06f
              this.setSecondsOnFire(8);
          }
  
-@@ -264,7 +325,7 @@ public class Phantom extends FlyingMob implements Enemy {
+@@ -269,7 +330,7 @@ public class Phantom extends FlyingMob implements Enemy {
          private AttackPhase() {}
      }
  
@@ -4010,7 +3975,7 @@ index aa8734856ec7b90036afad13bfda46c02e548812..3ee0905bc4d054fef76e1f02e618f06f
  
          private float speed = 0.1F;
  
-@@ -272,8 +333,19 @@ public class Phantom extends FlyingMob implements Enemy {
+@@ -277,8 +338,19 @@ public class Phantom extends FlyingMob implements Enemy {
              super(entity);
          }
  
@@ -4031,7 +3996,7 @@ index aa8734856ec7b90036afad13bfda46c02e548812..3ee0905bc4d054fef76e1f02e618f06f
              if (Phantom.this.horizontalCollision) {
                  Phantom.this.setYRot(Phantom.this.getYRot() + 180.0F);
                  this.speed = 0.1F;
-@@ -319,14 +391,20 @@ public class Phantom extends FlyingMob implements Enemy {
+@@ -324,14 +396,20 @@ public class Phantom extends FlyingMob implements Enemy {
          }
      }
  
@@ -4055,7 +4020,7 @@ index aa8734856ec7b90036afad13bfda46c02e548812..3ee0905bc4d054fef76e1f02e618f06f
  
      private class PhantomBodyRotationControl extends BodyRotationControl {
 diff --git a/src/main/java/net/minecraft/world/entity/monster/Pillager.java b/src/main/java/net/minecraft/world/entity/monster/Pillager.java
-index cec545c3baa6599d47b9cf1a4b97de8771062a22..a12352cb50edd8bd7a8f514e714e352bb341c2f7 100644
+index cec545c3baa6599d47b9cf1a4b97de8771062a22..f2a8dffecc27ec45e3f7341cb67a2bd783400f4a 100644
 --- a/src/main/java/net/minecraft/world/entity/monster/Pillager.java
 +++ b/src/main/java/net/minecraft/world/entity/monster/Pillager.java
 @@ -62,15 +62,34 @@ public class Pillager extends AbstractIllager implements CrossbowAttackMob, Inve
@@ -4069,8 +4034,8 @@ index cec545c3baa6599d47b9cf1a4b97de8771062a22..a12352cb50edd8bd7a8f514e714e352b
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.pillagerRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.pillagerRidableInWater;
 +    }
 +
 +    @Override
@@ -4094,11 +4059,11 @@ index cec545c3baa6599d47b9cf1a4b97de8771062a22..a12352cb50edd8bd7a8f514e714e352b
          this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true));
          this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, AbstractVillager.class, false));
 diff --git a/src/main/java/net/minecraft/world/entity/monster/Ravager.java b/src/main/java/net/minecraft/world/entity/monster/Ravager.java
-index 6a0b4f86e5157494a917cf5efecb730081bae628..e497d0ff3cafd16d3aed9a858a506d1c6f4e140a 100644
+index 9258d0f7c5c27b6d3d8f99db947169d6800d8ea9..78bd5a76f105ff1ebf005ccb2590b4a04934ebb2 100644
 --- a/src/main/java/net/minecraft/world/entity/monster/Ravager.java
 +++ b/src/main/java/net/minecraft/world/entity/monster/Ravager.java
-@@ -69,14 +69,39 @@ public class Ravager extends Raider {
-         this.xpReward = 20;
+@@ -65,14 +65,39 @@ public class Ravager extends Raider {
+         this.setPathfindingMalus(BlockPathTypes.LEAVES, 0.0F);
      }
  
 +    // Purpur start
@@ -4108,8 +4073,8 @@ index 6a0b4f86e5157494a917cf5efecb730081bae628..e497d0ff3cafd16d3aed9a858a506d1c
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.ravagerRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.ravagerRidableInWater;
 +    }
 +
 +    @Override
@@ -4137,7 +4102,7 @@ index 6a0b4f86e5157494a917cf5efecb730081bae628..e497d0ff3cafd16d3aed9a858a506d1c
          this.targetSelector.addGoal(2, (new HurtByTargetGoal(this, new Class[]{Raider.class})).setAlertOthers());
          this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, Player.class, true));
          this.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(this, AbstractVillager.class, true, (entityliving) -> {
-@@ -151,7 +176,7 @@ public class Ravager extends Raider {
+@@ -150,7 +175,7 @@ public class Ravager extends Raider {
      @Override
      public void aiStep() {
          super.aiStep();
@@ -4147,10 +4112,10 @@ index 6a0b4f86e5157494a917cf5efecb730081bae628..e497d0ff3cafd16d3aed9a858a506d1c
                  this.getAttribute(Attributes.MOVEMENT_SPEED).setBaseValue(0.0D);
              } else {
 diff --git a/src/main/java/net/minecraft/world/entity/monster/Shulker.java b/src/main/java/net/minecraft/world/entity/monster/Shulker.java
-index 9dedb3599d5388c1bcc34558e8e5cb4a8668646f..2d31b78a9d27b3354b01eb957996a0477f457bec 100644
+index 8cb910da17d75a9d9c7dbeb3c9e24b6de657a2f7..6f652413d5375e0e6ddf82b3be682560ea6f5d67 100644
 --- a/src/main/java/net/minecraft/world/entity/monster/Shulker.java
 +++ b/src/main/java/net/minecraft/world/entity/monster/Shulker.java
-@@ -94,12 +94,31 @@ public class Shulker extends AbstractGolem implements VariantHolder<Optional<Dye
+@@ -98,12 +98,31 @@ public class Shulker extends AbstractGolem implements VariantHolder<Optional<Dye
          this.lookControl = new Shulker.ShulkerLookControl(this);
      }
  
@@ -4161,8 +4126,8 @@ index 9dedb3599d5388c1bcc34558e8e5cb4a8668646f..2d31b78a9d27b3354b01eb957996a047
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.shulkerRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.shulkerRidableInWater;
 +    }
 +
 +    @Override
@@ -4182,7 +4147,7 @@ index 9dedb3599d5388c1bcc34558e8e5cb4a8668646f..2d31b78a9d27b3354b01eb957996a047
          this.targetSelector.addGoal(1, (new HurtByTargetGoal(this, new Class[]{this.getClass()})).setAlertOthers());
          this.targetSelector.addGoal(2, new Shulker.ShulkerNearestAttackGoal(this));
          this.targetSelector.addGoal(3, new Shulker.ShulkerDefenseAttackGoal(this));
-@@ -607,7 +626,7 @@ public class Shulker extends AbstractGolem implements VariantHolder<Optional<Dye
+@@ -611,7 +630,7 @@ public class Shulker extends AbstractGolem implements VariantHolder<Optional<Dye
          return b0 != 16 && b0 <= 15 ? DyeColor.byId(b0) : null;
      }
  
@@ -4192,7 +4157,7 @@ index 9dedb3599d5388c1bcc34558e8e5cb4a8668646f..2d31b78a9d27b3354b01eb957996a047
          public ShulkerLookControl(Mob entity) {
              super(entity);
 diff --git a/src/main/java/net/minecraft/world/entity/monster/Silverfish.java b/src/main/java/net/minecraft/world/entity/monster/Silverfish.java
-index 37d3b670a93c26b87ffc5c93ad7828f45b4b0217..07b134957b0d53841f2d4462f91fcf20fb9006fd 100644
+index cd1098acc2bec9db2f242738a04f9fae3a66c1bf..cebde559bfb922e279cfcee9c34b971441d5681d 100644
 --- a/src/main/java/net/minecraft/world/entity/monster/Silverfish.java
 +++ b/src/main/java/net/minecraft/world/entity/monster/Silverfish.java
 @@ -42,14 +42,33 @@ public class Silverfish extends Monster {
@@ -4206,8 +4171,8 @@ index 37d3b670a93c26b87ffc5c93ad7828f45b4b0217..07b134957b0d53841f2d4462f91fcf20
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.silverfishRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.silverfishRidableInWater;
 +    }
 +
 +    @Override
@@ -4230,7 +4195,7 @@ index 37d3b670a93c26b87ffc5c93ad7828f45b4b0217..07b134957b0d53841f2d4462f91fcf20
          this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true));
      }
 diff --git a/src/main/java/net/minecraft/world/entity/monster/Skeleton.java b/src/main/java/net/minecraft/world/entity/monster/Skeleton.java
-index badde621357a567965f0ef203e402e21bed09059..84d03d11d24e6c36a91be7a8e310e91a002370fe 100644
+index badde621357a567965f0ef203e402e21bed09059..7a2e0b0e30ef1155061ecad4a517a19078b71984 100644
 --- a/src/main/java/net/minecraft/world/entity/monster/Skeleton.java
 +++ b/src/main/java/net/minecraft/world/entity/monster/Skeleton.java
 @@ -26,6 +26,23 @@ public class Skeleton extends AbstractSkeleton {
@@ -4244,8 +4209,8 @@ index badde621357a567965f0ef203e402e21bed09059..84d03d11d24e6c36a91be7a8e310e91a
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.skeletonRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.skeletonRidableInWater;
 +    }
 +
 +    @Override
@@ -4258,7 +4223,7 @@ index badde621357a567965f0ef203e402e21bed09059..84d03d11d24e6c36a91be7a8e310e91a
      protected void defineSynchedData() {
          super.defineSynchedData();
 diff --git a/src/main/java/net/minecraft/world/entity/monster/Slime.java b/src/main/java/net/minecraft/world/entity/monster/Slime.java
-index 87c2e50c6f817d1a77e0cfd64366765b265f9ba0..3de34f745609cfcb8039c72b0432966262918510 100644
+index c41c1c2712920c6b7d822cd0f37a5d8d725e4054..0e0f82403add7912f512a675fc1c9328d61b4ff3 100644
 --- a/src/main/java/net/minecraft/world/entity/monster/Slime.java
 +++ b/src/main/java/net/minecraft/world/entity/monster/Slime.java
 @@ -64,6 +64,7 @@ public class Slime extends Mob implements Enemy {
@@ -4280,8 +4245,8 @@ index 87c2e50c6f817d1a77e0cfd64366765b265f9ba0..3de34f745609cfcb8039c72b04329662
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.slimeRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.slimeRidableInWater;
 +    }
 +
 +    @Override
@@ -4388,7 +4353,7 @@ index 87c2e50c6f817d1a77e0cfd64366765b265f9ba0..3de34f745609cfcb8039c72b04329662
  
              }
 diff --git a/src/main/java/net/minecraft/world/entity/monster/Spider.java b/src/main/java/net/minecraft/world/entity/monster/Spider.java
-index d786b8b8c9d478504f74e65c3bc7ed3e9884d003..e95e5677df0affdf4ce87365263c40e0b9d396c1 100644
+index 0c36bb47bd7040f1544817810e1c87157cdaff96..ca13dbeea191b7508abbf7a89c3cf182ce0cfa09 100644
 --- a/src/main/java/net/minecraft/world/entity/monster/Spider.java
 +++ b/src/main/java/net/minecraft/world/entity/monster/Spider.java
 @@ -51,14 +51,33 @@ public class Spider extends Monster {
@@ -4402,8 +4367,8 @@ index d786b8b8c9d478504f74e65c3bc7ed3e9884d003..e95e5677df0affdf4ce87365263c40e0
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.spiderRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.spiderRidableInWater;
 +    }
 +
 +    @Override
@@ -4426,7 +4391,7 @@ index d786b8b8c9d478504f74e65c3bc7ed3e9884d003..e95e5677df0affdf4ce87365263c40e0
          this.targetSelector.addGoal(2, new Spider.SpiderTargetGoal<>(this, Player.class));
          this.targetSelector.addGoal(3, new Spider.SpiderTargetGoal<>(this, IronGolem.class));
 diff --git a/src/main/java/net/minecraft/world/entity/monster/Stray.java b/src/main/java/net/minecraft/world/entity/monster/Stray.java
-index 118b636a44e4b062e812e433f603b039276337da..5737b1b2c2882e67082e2c0243b192ac1d50f8b7 100644
+index 118b636a44e4b062e812e433f603b039276337da..03a0dc6594b423191ec5c54252c37081a12a19a9 100644
 --- a/src/main/java/net/minecraft/world/entity/monster/Stray.java
 +++ b/src/main/java/net/minecraft/world/entity/monster/Stray.java
 @@ -21,6 +21,23 @@ public class Stray extends AbstractSkeleton {
@@ -4440,8 +4405,8 @@ index 118b636a44e4b062e812e433f603b039276337da..5737b1b2c2882e67082e2c0243b192ac
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.strayRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.strayRidableInWater;
 +    }
 +
 +    @Override
@@ -4454,10 +4419,10 @@ index 118b636a44e4b062e812e433f603b039276337da..5737b1b2c2882e67082e2c0243b192ac
          BlockPos blockPos = pos;
  
 diff --git a/src/main/java/net/minecraft/world/entity/monster/Strider.java b/src/main/java/net/minecraft/world/entity/monster/Strider.java
-index 6a511394bb01e025d5e3cf3963618920eee74445..db8510eeb8ba3218b732d80bb69779a46a439462 100644
+index 66755efc54059dfb8625f028bf0548d188a57aa2..da652fdb3afbdae1a26d76a2669b57affbfecd84 100644
 --- a/src/main/java/net/minecraft/world/entity/monster/Strider.java
 +++ b/src/main/java/net/minecraft/world/entity/monster/Strider.java
-@@ -96,6 +96,23 @@ public class Strider extends Animal implements ItemSteerable, Saddleable {
+@@ -100,6 +100,23 @@ public class Strider extends Animal implements ItemSteerable, Saddleable {
          this.setPathfindingMalus(BlockPathTypes.DAMAGE_FIRE, 0.0F);
      }
  
@@ -4468,8 +4433,8 @@ index 6a511394bb01e025d5e3cf3963618920eee74445..db8510eeb8ba3218b732d80bb69779a4
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.striderRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.striderRidableInWater;
 +    }
 +
 +    @Override
@@ -4481,7 +4446,7 @@ index 6a511394bb01e025d5e3cf3963618920eee74445..db8510eeb8ba3218b732d80bb69779a4
      public static boolean checkStriderSpawnRules(EntityType<Strider> type, LevelAccessor world, MobSpawnType spawnReason, BlockPos pos, RandomSource random) {
          BlockPos.MutableBlockPos blockposition_mutableblockposition = pos.mutable();
  
-@@ -157,6 +174,7 @@ public class Strider extends Animal implements ItemSteerable, Saddleable {
+@@ -161,6 +178,7 @@ public class Strider extends Animal implements ItemSteerable, Saddleable {
      @Override
      protected void registerGoals() {
          this.panicGoal = new PanicGoal(this, 1.65D);
@@ -4489,7 +4454,7 @@ index 6a511394bb01e025d5e3cf3963618920eee74445..db8510eeb8ba3218b732d80bb69779a4
          this.goalSelector.addGoal(1, this.panicGoal);
          this.goalSelector.addGoal(2, new BreedGoal(this, 1.0D));
          this.temptGoal = new TemptGoal(this, 1.4D, Strider.TEMPT_ITEMS, false);
-@@ -440,7 +458,7 @@ public class Strider extends Animal implements ItemSteerable, Saddleable {
+@@ -470,7 +488,7 @@ public class Strider extends Animal implements ItemSteerable, Saddleable {
              if (!enuminteractionresult.consumesAction()) {
                  ItemStack itemstack = player.getItemInHand(hand);
  
@@ -4499,10 +4464,10 @@ index 6a511394bb01e025d5e3cf3963618920eee74445..db8510eeb8ba3218b732d80bb69779a4
                  if (flag && !this.isSilent()) {
                      this.level.playSound((Player) null, this.getX(), this.getY(), this.getZ(), SoundEvents.STRIDER_EAT, this.getSoundSource(), 1.0F, 1.0F + (this.random.nextFloat() - this.random.nextFloat()) * 0.2F);
 diff --git a/src/main/java/net/minecraft/world/entity/monster/Vex.java b/src/main/java/net/minecraft/world/entity/monster/Vex.java
-index 8804771d73c2521d6dff284de3464fa5788e5ffc..cdfa94f8deeca5ab529e5027b0fdb3c072452582 100644
+index bb5c2f90bef5e3c57ffde996853e122d108b2789..38f7e1e41816721f332f548887d69c5eb98bad6a 100644
 --- a/src/main/java/net/minecraft/world/entity/monster/Vex.java
 +++ b/src/main/java/net/minecraft/world/entity/monster/Vex.java
-@@ -62,6 +62,50 @@ public class Vex extends Monster {
+@@ -63,6 +63,50 @@ public class Vex extends Monster implements TraceableEntity {
          this.xpReward = 3;
      }
  
@@ -4513,8 +4478,8 @@ index 8804771d73c2521d6dff284de3464fa5788e5ffc..cdfa94f8deeca5ab529e5027b0fdb3c0
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.vexRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.vexRidableInWater;
 +    }
 +
 +    @Override
@@ -4553,7 +4518,7 @@ index 8804771d73c2521d6dff284de3464fa5788e5ffc..cdfa94f8deeca5ab529e5027b0fdb3c0
      @Override
      protected float getStandingEyeHeight(Pose pose, EntityDimensions dimensions) {
          return dimensions.height - 0.28125F;
-@@ -80,7 +124,7 @@ public class Vex extends Monster {
+@@ -81,7 +125,7 @@ public class Vex extends Monster implements TraceableEntity {
  
      @Override
      public void tick() {
@@ -4562,7 +4527,7 @@ index 8804771d73c2521d6dff284de3464fa5788e5ffc..cdfa94f8deeca5ab529e5027b0fdb3c0
          super.tick();
          this.noPhysics = false;
          this.setNoGravity(true);
-@@ -95,17 +139,19 @@ public class Vex extends Monster {
+@@ -96,17 +140,19 @@ public class Vex extends Monster implements TraceableEntity {
      protected void registerGoals() {
          super.registerGoals();
          this.goalSelector.addGoal(0, new FloatGoal(this));
@@ -4583,7 +4548,7 @@ index 8804771d73c2521d6dff284de3464fa5788e5ffc..cdfa94f8deeca5ab529e5027b0fdb3c0
      }
  
      @Override
-@@ -233,14 +279,14 @@ public class Vex extends Monster {
+@@ -235,14 +281,14 @@ public class Vex extends Monster implements TraceableEntity {
          return 0.4D;
      }
  
@@ -4600,7 +4565,7 @@ index 8804771d73c2521d6dff284de3464fa5788e5ffc..cdfa94f8deeca5ab529e5027b0fdb3c0
              if (this.operation == MoveControl.Operation.MOVE_TO) {
                  Vec3 vec3d = new Vec3(this.wantedX - Vex.this.getX(), this.wantedY - Vex.this.getY(), this.wantedZ - Vex.this.getZ());
                  double d0 = vec3d.length();
-@@ -249,7 +295,7 @@ public class Vex extends Monster {
+@@ -251,7 +297,7 @@ public class Vex extends Monster implements TraceableEntity {
                      this.operation = MoveControl.Operation.WAIT;
                      Vex.this.setDeltaMovement(Vex.this.getDeltaMovement().scale(0.5D));
                  } else {
@@ -4610,7 +4575,7 @@ index 8804771d73c2521d6dff284de3464fa5788e5ffc..cdfa94f8deeca5ab529e5027b0fdb3c0
                          Vec3 vec3d1 = Vex.this.getDeltaMovement();
  
 diff --git a/src/main/java/net/minecraft/world/entity/monster/Vindicator.java b/src/main/java/net/minecraft/world/entity/monster/Vindicator.java
-index a9e75a16a7dc0ff5d4f0faa92ebc444559a39325..c0421de54b2d192d67c54cef359f6b12d2d013c1 100644
+index a9e75a16a7dc0ff5d4f0faa92ebc444559a39325..78fe2cc6c866252c1d537c1e23854a0d2608fe36 100644
 --- a/src/main/java/net/minecraft/world/entity/monster/Vindicator.java
 +++ b/src/main/java/net/minecraft/world/entity/monster/Vindicator.java
 @@ -58,14 +58,33 @@ public class Vindicator extends AbstractIllager {
@@ -4624,8 +4589,8 @@ index a9e75a16a7dc0ff5d4f0faa92ebc444559a39325..c0421de54b2d192d67c54cef359f6b12
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.vindicatorRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.vindicatorRidableInWater;
 +    }
 +
 +    @Override
@@ -4648,10 +4613,10 @@ index a9e75a16a7dc0ff5d4f0faa92ebc444559a39325..c0421de54b2d192d67c54cef359f6b12
          this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true));
          this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, AbstractVillager.class, true));
 diff --git a/src/main/java/net/minecraft/world/entity/monster/Witch.java b/src/main/java/net/minecraft/world/entity/monster/Witch.java
-index b7bc64818387288955d0723cd071d4203bd2f121..f15b93f24adfa72d6d2271b67ecca0996df2d870 100644
+index 096546d7a97f031060bda7545aa620d522766719..c15a35e7ac5dac31872b5e27671ce26fe1702eef 100644
 --- a/src/main/java/net/minecraft/world/entity/monster/Witch.java
 +++ b/src/main/java/net/minecraft/world/entity/monster/Witch.java
-@@ -56,6 +56,23 @@ public class Witch extends Raider implements RangedAttackMob {
+@@ -57,6 +57,23 @@ public class Witch extends Raider implements RangedAttackMob {
          super(type, world);
      }
  
@@ -4662,8 +4627,8 @@ index b7bc64818387288955d0723cd071d4203bd2f121..f15b93f24adfa72d6d2271b67ecca099
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.witchRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.witchRidableInWater;
 +    }
 +
 +    @Override
@@ -4675,7 +4640,7 @@ index b7bc64818387288955d0723cd071d4203bd2f121..f15b93f24adfa72d6d2271b67ecca099
      @Override
      protected void registerGoals() {
          super.registerGoals();
-@@ -64,10 +81,12 @@ public class Witch extends Raider implements RangedAttackMob {
+@@ -65,10 +82,12 @@ public class Witch extends Raider implements RangedAttackMob {
          });
          this.attackPlayersGoal = new NearestAttackableWitchTargetGoal<>(this, Player.class, 10, true, false, (Predicate) null);
          this.goalSelector.addGoal(1, new FloatGoal(this));
@@ -4689,7 +4654,7 @@ index b7bc64818387288955d0723cd071d4203bd2f121..f15b93f24adfa72d6d2271b67ecca099
          this.targetSelector.addGoal(2, this.healRaidersGoal);
          this.targetSelector.addGoal(3, this.attackPlayersGoal);
 diff --git a/src/main/java/net/minecraft/world/entity/monster/WitherSkeleton.java b/src/main/java/net/minecraft/world/entity/monster/WitherSkeleton.java
-index 6449213d717271bcc516e393a78dfe1e5c762d68..3b272b5653c6e7672f16eb35314c689910c14250 100644
+index 6449213d717271bcc516e393a78dfe1e5c762d68..8da19fac75c283f026cb051668557c2034c40af9 100644
 --- a/src/main/java/net/minecraft/world/entity/monster/WitherSkeleton.java
 +++ b/src/main/java/net/minecraft/world/entity/monster/WitherSkeleton.java
 @@ -35,6 +35,23 @@ public class WitherSkeleton extends AbstractSkeleton {
@@ -4703,8 +4668,8 @@ index 6449213d717271bcc516e393a78dfe1e5c762d68..3b272b5653c6e7672f16eb35314c6899
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.witherSkeletonRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.witherSkeletonRidableInWater;
 +    }
 +
 +    @Override
@@ -4717,7 +4682,7 @@ index 6449213d717271bcc516e393a78dfe1e5c762d68..3b272b5653c6e7672f16eb35314c6899
      protected void registerGoals() {
          this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, AbstractPiglin.class, true));
 diff --git a/src/main/java/net/minecraft/world/entity/monster/Zoglin.java b/src/main/java/net/minecraft/world/entity/monster/Zoglin.java
-index 0ca82175ec91ca8b3418c0931682c972666c47f8..9314af7daf2522c05358a98103780ab1716d2418 100644
+index 0ca82175ec91ca8b3418c0931682c972666c47f8..ee1bbff9e9dfd110e33a36c652d50a7f83093cab 100644
 --- a/src/main/java/net/minecraft/world/entity/monster/Zoglin.java
 +++ b/src/main/java/net/minecraft/world/entity/monster/Zoglin.java
 @@ -67,6 +67,23 @@ public class Zoglin extends Monster implements Enemy, HoglinBase {
@@ -4731,8 +4696,8 @@ index 0ca82175ec91ca8b3418c0931682c972666c47f8..9314af7daf2522c05358a98103780ab1
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.zoglinRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.zoglinRidableInWater;
 +    }
 +
 +    @Override
@@ -4753,7 +4718,7 @@ index 0ca82175ec91ca8b3418c0931682c972666c47f8..9314af7daf2522c05358a98103780ab1
          this.level.getProfiler().pop();
          this.updateActivity();
 diff --git a/src/main/java/net/minecraft/world/entity/monster/Zombie.java b/src/main/java/net/minecraft/world/entity/monster/Zombie.java
-index 9976205537cfe228735687f1e9c52c74ac025690..c7aa68cc7d8403a7dedf445fda30e6ee709f463d 100644
+index 9976205537cfe228735687f1e9c52c74ac025690..aa264a5975b1373fa979104355dae899c785aaf1 100644
 --- a/src/main/java/net/minecraft/world/entity/monster/Zombie.java
 +++ b/src/main/java/net/minecraft/world/entity/monster/Zombie.java
 @@ -106,11 +106,30 @@ public class Zombie extends Monster {
@@ -4767,8 +4732,8 @@ index 9976205537cfe228735687f1e9c52c74ac025690..c7aa68cc7d8403a7dedf445fda30e6ee
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.zombieRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.zombieRidableInWater;
 +    }
 +
 +    @Override
@@ -4788,7 +4753,7 @@ index 9976205537cfe228735687f1e9c52c74ac025690..c7aa68cc7d8403a7dedf445fda30e6ee
      }
  
 diff --git a/src/main/java/net/minecraft/world/entity/monster/ZombieVillager.java b/src/main/java/net/minecraft/world/entity/monster/ZombieVillager.java
-index 71a36cf9b976443cca9ab63cd0eb23253f638562..09fa0b71bd9b207eba3f0e7ac104ccef9dac1cc8 100644
+index 71a36cf9b976443cca9ab63cd0eb23253f638562..02a97f526fb10056dcad78614ae8f6973449e9ab 100644
 --- a/src/main/java/net/minecraft/world/entity/monster/ZombieVillager.java
 +++ b/src/main/java/net/minecraft/world/entity/monster/ZombieVillager.java
 @@ -79,6 +79,23 @@ public class ZombieVillager extends Zombie implements VillagerDataHolder {
@@ -4802,8 +4767,8 @@ index 71a36cf9b976443cca9ab63cd0eb23253f638562..09fa0b71bd9b207eba3f0e7ac104ccef
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.zombieVillagerRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.zombieVillagerRidableInWater;
 +    }
 +
 +    @Override
@@ -4816,7 +4781,7 @@ index 71a36cf9b976443cca9ab63cd0eb23253f638562..09fa0b71bd9b207eba3f0e7ac104ccef
      protected void defineSynchedData() {
          super.defineSynchedData();
 diff --git a/src/main/java/net/minecraft/world/entity/monster/ZombifiedPiglin.java b/src/main/java/net/minecraft/world/entity/monster/ZombifiedPiglin.java
-index b75945807b425609394c343da56c316a769f0a29..838420f5d61eaf5e4abb52751b010d57def21d6f 100644
+index b75945807b425609394c343da56c316a769f0a29..ad82c064c9e31ffc1dd96e44517187635100fc22 100644
 --- a/src/main/java/net/minecraft/world/entity/monster/ZombifiedPiglin.java
 +++ b/src/main/java/net/minecraft/world/entity/monster/ZombifiedPiglin.java
 @@ -63,6 +63,23 @@ public class ZombifiedPiglin extends Zombie implements NeutralMob {
@@ -4830,8 +4795,8 @@ index b75945807b425609394c343da56c316a769f0a29..838420f5d61eaf5e4abb52751b010d57
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.zombifiedPiglinRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.zombifiedPiglinRidableInWater;
 +    }
 +
 +    @Override
@@ -4844,7 +4809,7 @@ index b75945807b425609394c343da56c316a769f0a29..838420f5d61eaf5e4abb52751b010d57
      public void setPersistentAngerTarget(@Nullable UUID angryAt) {
          this.persistentAngerTarget = angryAt;
 diff --git a/src/main/java/net/minecraft/world/entity/monster/hoglin/Hoglin.java b/src/main/java/net/minecraft/world/entity/monster/hoglin/Hoglin.java
-index daa2224b021c966751eb39f269ffbfe6e7f3d426..3330580c06d4e7645be12deffb63936799dffe44 100644
+index daa2224b021c966751eb39f269ffbfe6e7f3d426..74d3068c4f74c19740ad3e2f507489d405d78598 100644
 --- a/src/main/java/net/minecraft/world/entity/monster/hoglin/Hoglin.java
 +++ b/src/main/java/net/minecraft/world/entity/monster/hoglin/Hoglin.java
 @@ -67,6 +67,23 @@ public class Hoglin extends Animal implements Enemy, HoglinBase {
@@ -4858,8 +4823,8 @@ index daa2224b021c966751eb39f269ffbfe6e7f3d426..3330580c06d4e7645be12deffb639367
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.hoglinRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.hoglinRidableInWater;
 +    }
 +
 +    @Override
@@ -4881,7 +4846,7 @@ index daa2224b021c966751eb39f269ffbfe6e7f3d426..3330580c06d4e7645be12deffb639367
          this.level.getProfiler().pop();
          HoglinAi.updateActivity(this);
 diff --git a/src/main/java/net/minecraft/world/entity/monster/piglin/Piglin.java b/src/main/java/net/minecraft/world/entity/monster/piglin/Piglin.java
-index b401fb4f276ca81b4bb18426ee56abed8a9f7a7b..33ffbc4ac5cecec8487c0529c1dee8596bb0ab30 100644
+index b401fb4f276ca81b4bb18426ee56abed8a9f7a7b..5dcaa05ee11872502736c39588dfe03cb59c8e2d 100644
 --- a/src/main/java/net/minecraft/world/entity/monster/piglin/Piglin.java
 +++ b/src/main/java/net/minecraft/world/entity/monster/piglin/Piglin.java
 @@ -97,6 +97,23 @@ public class Piglin extends AbstractPiglin implements CrossbowAttackMob, Invento
@@ -4895,8 +4860,8 @@ index b401fb4f276ca81b4bb18426ee56abed8a9f7a7b..33ffbc4ac5cecec8487c0529c1dee859
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.piglinRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.piglinRidableInWater;
 +    }
 +
 +    @Override
@@ -4918,7 +4883,7 @@ index b401fb4f276ca81b4bb18426ee56abed8a9f7a7b..33ffbc4ac5cecec8487c0529c1dee859
          this.level.getProfiler().pop();
          PiglinAi.updateActivity(this);
 diff --git a/src/main/java/net/minecraft/world/entity/monster/piglin/PiglinBrute.java b/src/main/java/net/minecraft/world/entity/monster/piglin/PiglinBrute.java
-index 769e4fbaac01a4fe3a45bd9cab5c63b61fc69f53..ff149234a8f3e1c94961e41d5bc8117460b301d9 100644
+index 769e4fbaac01a4fe3a45bd9cab5c63b61fc69f53..ac066b2f3e369321752470722941ae26af511309 100644
 --- a/src/main/java/net/minecraft/world/entity/monster/piglin/PiglinBrute.java
 +++ b/src/main/java/net/minecraft/world/entity/monster/piglin/PiglinBrute.java
 @@ -41,6 +41,23 @@ public class PiglinBrute extends AbstractPiglin {
@@ -4932,8 +4897,8 @@ index 769e4fbaac01a4fe3a45bd9cab5c63b61fc69f53..ff149234a8f3e1c94961e41d5bc81174
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.piglinBruteRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.piglinBruteRidableInWater;
 +    }
 +
 +    @Override
@@ -4954,7 +4919,7 @@ index 769e4fbaac01a4fe3a45bd9cab5c63b61fc69f53..ff149234a8f3e1c94961e41d5bc81174
          this.level.getProfiler().pop();
          PiglinBruteAi.updateActivity(this);
 diff --git a/src/main/java/net/minecraft/world/entity/monster/warden/Warden.java b/src/main/java/net/minecraft/world/entity/monster/warden/Warden.java
-index 904826ea563bd2eb469f403df459def62cc1b5e6..456ebb0829d19d13abe05d83035c4abe3589962f 100644
+index 907d77dd74066c723238155b42028a811365b1f8..f40806e7d9c08cf7b85215fbf0c66169eb4dc6ae 100644
 --- a/src/main/java/net/minecraft/world/entity/monster/warden/Warden.java
 +++ b/src/main/java/net/minecraft/world/entity/monster/warden/Warden.java
 @@ -120,8 +120,32 @@ public class Warden extends Monster implements VibrationListener.VibrationListen
@@ -4971,8 +4936,8 @@ index 904826ea563bd2eb469f403df459def62cc1b5e6..456ebb0829d19d13abe05d83035c4abe
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.wardenRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.wardenRidableInWater;
 +    }
 +
 +    @Override
@@ -5014,7 +4979,7 @@ index 904826ea563bd2eb469f403df459def62cc1b5e6..456ebb0829d19d13abe05d83035c4abe
  
      public static void applyDarknessAround(ServerLevel world, Vec3 pos, @Nullable Entity entity, int range) {
 diff --git a/src/main/java/net/minecraft/world/entity/npc/Villager.java b/src/main/java/net/minecraft/world/entity/npc/Villager.java
-index 76a9da8209d557b913c49ccd281bf147b9ac4fa4..4d0426dbbc3d87d7450acf983c45f3b8636e11e2 100644
+index 5402a084ef5fe0b3cfea897a90cffade1eff5b66..bf232c81f07e5783071b79b5f3510f9ed473e400 100644
 --- a/src/main/java/net/minecraft/world/entity/npc/Villager.java
 +++ b/src/main/java/net/minecraft/world/entity/npc/Villager.java
 @@ -155,6 +155,28 @@ public class Villager extends AbstractVillager implements ReputationEventHandler
@@ -5028,8 +4993,8 @@ index 76a9da8209d557b913c49ccd281bf147b9ac4fa4..4d0426dbbc3d87d7450acf983c45f3b8
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.villagerRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.villagerRidableInWater;
 +    }
 +
 +    @Override
@@ -5076,10 +5041,10 @@ index 76a9da8209d557b913c49ccd281bf147b9ac4fa4..4d0426dbbc3d87d7450acf983c45f3b8
                          this.startTrading(player);
                      }
 diff --git a/src/main/java/net/minecraft/world/entity/npc/WanderingTrader.java b/src/main/java/net/minecraft/world/entity/npc/WanderingTrader.java
-index e92e6fb4cf97f4d5406b5b5d5786bfa5fb55f536..64fb6f2ea7b792d131feca7278034336056c49b9 100644
+index c9fb50c33ac15fe72bc77167e4647f30942fdc5d..89ec1e52f91c2e4cd17eeaa23cab366c9cbb8dc0 100644
 --- a/src/main/java/net/minecraft/world/entity/npc/WanderingTrader.java
 +++ b/src/main/java/net/minecraft/world/entity/npc/WanderingTrader.java
-@@ -66,6 +66,23 @@ public class WanderingTrader extends net.minecraft.world.entity.npc.AbstractVill
+@@ -69,6 +69,23 @@ public class WanderingTrader extends net.minecraft.world.entity.npc.AbstractVill
          this.setDespawnDelay(48000); // CraftBukkit - set default from MobSpawnerTrader
      }
  
@@ -5090,8 +5055,8 @@ index e92e6fb4cf97f4d5406b5b5d5786bfa5fb55f536..64fb6f2ea7b792d131feca7278034336
 +    }
 +
 +    @Override
-+    public boolean rideableUnderWater() {
-+        return level.purpurConfig.wanderingTraderRidableInWater;
++    public boolean dismountsUnderwater() {
++        return level.purpurConfig.useDismountsUnderwaterTag ? super.dismountsUnderwater() : !level.purpurConfig.wanderingTraderRidableInWater;
 +    }
 +
 +    @Override
@@ -5103,7 +5068,7 @@ index e92e6fb4cf97f4d5406b5b5d5786bfa5fb55f536..64fb6f2ea7b792d131feca7278034336
      @Override
      protected void registerGoals() {
          this.goalSelector.addGoal(0, new FloatGoal(this));
-@@ -113,8 +130,9 @@ public class WanderingTrader extends net.minecraft.world.entity.npc.AbstractVill
+@@ -116,8 +133,9 @@ public class WanderingTrader extends net.minecraft.world.entity.npc.AbstractVill
              }
  
              if (this.getOffers().isEmpty()) {
@@ -5115,10 +5080,10 @@ index e92e6fb4cf97f4d5406b5b5d5786bfa5fb55f536..64fb6f2ea7b792d131feca7278034336
                      this.setTradingPlayer(player);
                      this.openTradingScreen(player, this.getDisplayName(), 1);
 diff --git a/src/main/java/net/minecraft/world/entity/player/Player.java b/src/main/java/net/minecraft/world/entity/player/Player.java
-index f6e4194856d4a2710a169b5823e74da1ba2c9130..bc9198a76f6b5aa5d526882e214d731d5b06f52b 100644
+index 0629c471d38a77c44fc1c86ccdfcb0690f61ca17..ffcc81c07b5aa45d1471e05676f43e96db13b045 100644
 --- a/src/main/java/net/minecraft/world/entity/player/Player.java
 +++ b/src/main/java/net/minecraft/world/entity/player/Player.java
-@@ -194,6 +194,19 @@ public abstract class Player extends LivingEntity {
+@@ -197,6 +197,19 @@ public abstract class Player extends LivingEntity {
      }
      // CraftBukkit end
  
@@ -5139,10 +5104,10 @@ index f6e4194856d4a2710a169b5823e74da1ba2c9130..bc9198a76f6b5aa5d526882e214d731d
          super(EntityType.PLAYER, world);
          this.lastItemInMainHand = ItemStack.EMPTY;
 diff --git a/src/main/java/net/minecraft/world/entity/projectile/LlamaSpit.java b/src/main/java/net/minecraft/world/entity/projectile/LlamaSpit.java
-index 4132c1113f5437a776e5e3c1cb306904775aed88..1a945a32c3d3705a318ebca72a365931a8c001b7 100644
+index c4f4a26e016eea744f587461af80461074d48303..10b109de5abc015b61a896d363ad37a006dff554 100644
 --- a/src/main/java/net/minecraft/world/entity/projectile/LlamaSpit.java
 +++ b/src/main/java/net/minecraft/world/entity/projectile/LlamaSpit.java
-@@ -27,6 +27,12 @@ public class LlamaSpit extends Projectile {
+@@ -26,6 +26,12 @@ public class LlamaSpit extends Projectile {
          this.setPos(owner.getX() - (double) (owner.getBbWidth() + 1.0F) * 0.5D * (double) Mth.sin(owner.yBodyRot * 0.017453292F), owner.getEyeY() - 0.10000000149011612D, owner.getZ() + (double) (owner.getBbWidth() + 1.0F) * 0.5D * (double) Mth.cos(owner.yBodyRot * 0.017453292F));
      }
  
@@ -5156,10 +5121,10 @@ index 4132c1113f5437a776e5e3c1cb306904775aed88..1a945a32c3d3705a318ebca72a365931
      public void tick() {
          super.tick();
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java
-index 78f53ee557276de85f0431ebcb146445b1f4fb92..ba898640a8f693e8bae43281b170d3505154b273 100644
+index 56c75029a94e8812c9e0ce5375aaa7cbcda90b87..a4644b1d9abb7ffeda89801e4562a078ffe43288 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftEntity.java
-@@ -1404,4 +1404,27 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
+@@ -1442,4 +1442,27 @@ public abstract class CraftEntity implements org.bukkit.entity.Entity {
          return !this.getHandle().level.noCollision(this.getHandle(), aabb);
      }
      // Paper End - Collision API
@@ -5167,7 +5132,7 @@ index 78f53ee557276de85f0431ebcb146445b1f4fb92..ba898640a8f693e8bae43281b170d350
 +    // Purpur start
 +    @Override
 +    public org.bukkit.entity.Player getRider() {
-+        Player rider = getHandle().getRider();
++        net.minecraft.world.entity.player.Player rider = getHandle().getRider();
 +        return rider != null ? (org.bukkit.entity.Player) rider.getBukkitEntity() : null;
 +    }
 +
@@ -5183,15 +5148,15 @@ index 78f53ee557276de85f0431ebcb146445b1f4fb92..ba898640a8f693e8bae43281b170d350
 +
 +    @Override
 +    public boolean isRidableInWater() {
-+        return getHandle().rideableUnderWater();
++        return !getHandle().dismountsUnderwater();
 +    }
 +    // Purpur end
  }
 diff --git a/src/main/java/org/bukkit/craftbukkit/event/CraftEventFactory.java b/src/main/java/org/bukkit/craftbukkit/event/CraftEventFactory.java
-index 6a52ae70b5f7fd9953b6b2605cae722f606e7fec..5e346ad16aaf958c396b4212fcf07f0ea873d323 100644
+index 221f5088953b3452966d07eabd4ea8b38c465fd9..bfb8039a65fbfdb6d2fa6fc4fdeb146fbc4e147f 100644
 --- a/src/main/java/org/bukkit/craftbukkit/event/CraftEventFactory.java
 +++ b/src/main/java/org/bukkit/craftbukkit/event/CraftEventFactory.java
-@@ -545,6 +545,15 @@ public class CraftEventFactory {
+@@ -563,6 +563,15 @@ public class CraftEventFactory {
          // Paper end
          craftServer.getPluginManager().callEvent(event);
  
@@ -5207,7 +5172,7 @@ index 6a52ae70b5f7fd9953b6b2605cae722f606e7fec..5e346ad16aaf958c396b4212fcf07f0e
          return event;
      }
  
-@@ -982,6 +991,7 @@ public class CraftEventFactory {
+@@ -1000,6 +1009,7 @@ public class CraftEventFactory {
                      damageCause = DamageCause.ENTITY_EXPLOSION;
                  }
                  event = new EntityDamageByEntityEvent(damager.getBukkitEntity(), entity.getBukkitEntity(), damageCause, modifiers, modifierFunctions, source.isCritical()); // Paper - add critical damage API
@@ -5215,7 +5180,7 @@ index 6a52ae70b5f7fd9953b6b2605cae722f606e7fec..5e346ad16aaf958c396b4212fcf07f0e
              }
              event.setCancelled(cancelled);
  
-@@ -1088,6 +1098,7 @@ public class CraftEventFactory {
+@@ -1114,6 +1124,7 @@ public class CraftEventFactory {
              } else {
                  entity.lastDamageCancelled = true; // SPIGOT-5339, SPIGOT-6252, SPIGOT-6777: Keep track if the event was canceled
              }
@@ -5223,7 +5188,7 @@ index 6a52ae70b5f7fd9953b6b2605cae722f606e7fec..5e346ad16aaf958c396b4212fcf07f0e
              return event;
          }
  
-@@ -1147,6 +1158,7 @@ public class CraftEventFactory {
+@@ -1173,6 +1184,7 @@ public class CraftEventFactory {
          EntityDamageEvent event;
          if (damager != null) {
              event = new EntityDamageByEntityEvent(damager.getBukkitEntity(), damagee.getBukkitEntity(), cause, modifiers, modifierFunctions, critical); // Paper - add critical damage API
@@ -5232,7 +5197,7 @@ index 6a52ae70b5f7fd9953b6b2605cae722f606e7fec..5e346ad16aaf958c396b4212fcf07f0e
              event = new EntityDamageEvent(damagee.getBukkitEntity(), cause, modifiers, modifierFunctions);
          }
 diff --git a/src/main/java/org/purpurmc/purpur/PurpurConfig.java b/src/main/java/org/purpurmc/purpur/PurpurConfig.java
-index bd9ea8dfbd986c96000efb7dc36fc93d12a2c8b9..b0344a0baa22c4312ac9d1049b14671d932f76e2 100644
+index 43884d28fe27962a5ca895315849318975cb3011..943b65dd5169946d5fec86e3fc38076cae47ba58 100644
 --- a/src/main/java/org/purpurmc/purpur/PurpurConfig.java
 +++ b/src/main/java/org/purpurmc/purpur/PurpurConfig.java
 @@ -172,4 +172,9 @@ public class PurpurConfig {
@@ -5246,10 +5211,10 @@ index bd9ea8dfbd986c96000efb7dc36fc93d12a2c8b9..b0344a0baa22c4312ac9d1049b14671d
 +    }
  }
 diff --git a/src/main/java/org/purpurmc/purpur/PurpurWorldConfig.java b/src/main/java/org/purpurmc/purpur/PurpurWorldConfig.java
-index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da94b690da 100644
+index 2b7f1dedb3289efc7e42a138f4483f4969902801..ec168b917d60cc6d8c48620eb4dcd89b0b121aea 100644
 --- a/src/main/java/org/purpurmc/purpur/PurpurWorldConfig.java
 +++ b/src/main/java/org/purpurmc/purpur/PurpurWorldConfig.java
-@@ -92,4 +92,706 @@ public class PurpurWorldConfig {
+@@ -91,4 +91,717 @@ public class PurpurWorldConfig {
          final Map<String, Object> value = PurpurConfig.getMap("world-settings." + worldName + "." + path, null);
          return value.isEmpty() ? fallback : value;
      }
@@ -5257,14 +5222,16 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    public boolean babiesAreRidable = true;
 +    public boolean untamedTamablesAreRidable = true;
 +    public boolean useNightVisionWhenRiding = false;
++    public boolean useDismountsUnderwaterTag = true;
 +    private void ridableSettings() {
 +        babiesAreRidable = getBoolean("ridable-settings.babies-are-ridable", babiesAreRidable);
 +        untamedTamablesAreRidable = getBoolean("ridable-settings.untamed-tamables-are-ridable", untamedTamablesAreRidable);
 +        useNightVisionWhenRiding = getBoolean("ridable-settings.use-night-vision", useNightVisionWhenRiding);
++        useDismountsUnderwaterTag = getBoolean("ridable-settings.use-dismounts-underwater-tag", useDismountsUnderwaterTag);
 +    }
 +
 +    public boolean allayRidable = false;
-+    public boolean allayRidableInWater = false;
++    public boolean allayRidableInWater = true;
 +    public boolean allayControllable = true;
 +    private void allaySettings() {
 +        allayRidable = getBoolean("mobs.allay.ridable", allayRidable);
@@ -5280,7 +5247,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean batRidable = false;
-+    public boolean batRidableInWater = false;
++    public boolean batRidableInWater = true;
 +    public boolean batControllable = true;
 +    public double batMaxY = 320D;
 +    private void batSettings() {
@@ -5291,7 +5258,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean beeRidable = false;
-+    public boolean beeRidableInWater = false;
++    public boolean beeRidableInWater = true;
 +    public boolean beeControllable = true;
 +    public double beeMaxY = 320D;
 +    private void beeSettings() {
@@ -5302,7 +5269,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean blazeRidable = false;
-+    public boolean blazeRidableInWater = false;
++    public boolean blazeRidableInWater = true;
 +    public boolean blazeControllable = true;
 +    public double blazeMaxY = 320D;
 +    private void blazeSettings() {
@@ -5313,7 +5280,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean catRidable = false;
-+    public boolean catRidableInWater = false;
++    public boolean catRidableInWater = true;
 +    public boolean catControllable = true;
 +    private void catSettings() {
 +        catRidable = getBoolean("mobs.cat.ridable", catRidable);
@@ -5322,7 +5289,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean caveSpiderRidable = false;
-+    public boolean caveSpiderRidableInWater = false;
++    public boolean caveSpiderRidableInWater = true;
 +    public boolean caveSpiderControllable = true;
 +    private void caveSpiderSettings() {
 +        caveSpiderRidable = getBoolean("mobs.cave_spider.ridable", caveSpiderRidable);
@@ -5347,7 +5314,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean cowRidable = false;
-+    public boolean cowRidableInWater = false;
++    public boolean cowRidableInWater = true;
 +    public boolean cowControllable = true;
 +    private void cowSettings() {
 +        cowRidable = getBoolean("mobs.cow.ridable", cowRidable);
@@ -5356,7 +5323,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean creeperRidable = false;
-+    public boolean creeperRidableInWater = false;
++    public boolean creeperRidableInWater = true;
 +    public boolean creeperControllable = true;
 +    private void creeperSettings() {
 +        creeperRidable = getBoolean("mobs.creeper.ridable", creeperRidable);
@@ -5383,7 +5350,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean drownedRidable = false;
-+    public boolean drownedRidableInWater = false;
++    public boolean drownedRidableInWater = true;
 +    public boolean drownedControllable = true;
 +    private void drownedSettings() {
 +        drownedRidable = getBoolean("mobs.drowned.ridable", drownedRidable);
@@ -5399,7 +5366,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean enderDragonRidable = false;
-+    public boolean enderDragonRidableInWater = false;
++    public boolean enderDragonRidableInWater = true;
 +    public boolean enderDragonControllable = true;
 +    public double enderDragonMaxY = 320D;
 +    private void enderDragonSettings() {
@@ -5410,7 +5377,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean endermanRidable = false;
-+    public boolean endermanRidableInWater = false;
++    public boolean endermanRidableInWater = true;
 +    public boolean endermanControllable = true;
 +    private void endermanSettings() {
 +        endermanRidable = getBoolean("mobs.enderman.ridable", endermanRidable);
@@ -5419,7 +5386,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean endermiteRidable = false;
-+    public boolean endermiteRidableInWater = false;
++    public boolean endermiteRidableInWater = true;
 +    public boolean endermiteControllable = true;
 +    private void endermiteSettings() {
 +        endermiteRidable = getBoolean("mobs.endermite.ridable", endermiteRidable);
@@ -5428,7 +5395,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean evokerRidable = false;
-+    public boolean evokerRidableInWater = false;
++    public boolean evokerRidableInWater = true;
 +    public boolean evokerControllable = true;
 +    private void evokerSettings() {
 +        evokerRidable = getBoolean("mobs.evoker.ridable", evokerRidable);
@@ -5437,7 +5404,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean foxRidable = false;
-+    public boolean foxRidableInWater = false;
++    public boolean foxRidableInWater = true;
 +    public boolean foxControllable = true;
 +    private void foxSettings() {
 +        foxRidable = getBoolean("mobs.fox.ridable", foxRidable);
@@ -5446,7 +5413,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean frogRidable = false;
-+    public boolean frogRidableInWater = false;
++    public boolean frogRidableInWater = true;
 +    public boolean frogControllable = true;
 +    public float frogRidableJumpHeight = 0.65F;
 +    private void frogSettings() {
@@ -5457,7 +5424,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean ghastRidable = false;
-+    public boolean ghastRidableInWater = false;
++    public boolean ghastRidableInWater = true;
 +    public boolean ghastControllable = true;
 +    public double ghastMaxY = 320D;
 +    private void ghastSettings() {
@@ -5468,7 +5435,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean giantRidable = false;
-+    public boolean giantRidableInWater = false;
++    public boolean giantRidableInWater = true;
 +    public boolean giantControllable = true;
 +    private void giantSettings() {
 +        giantRidable = getBoolean("mobs.giant.ridable", giantRidable);
@@ -5484,7 +5451,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean goatRidable = false;
-+    public boolean goatRidableInWater = false;
++    public boolean goatRidableInWater = true;
 +    public boolean goatControllable = true;
 +    private void goatSettings() {
 +        goatRidable = getBoolean("mobs.goat.ridable", goatRidable);
@@ -5500,7 +5467,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean hoglinRidable = false;
-+    public boolean hoglinRidableInWater = false;
++    public boolean hoglinRidableInWater = true;
 +    public boolean hoglinControllable = true;
 +    private void hoglinSettings() {
 +        hoglinRidable = getBoolean("mobs.hoglin.ridable", hoglinRidable);
@@ -5514,7 +5481,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean huskRidable = false;
-+    public boolean huskRidableInWater = false;
++    public boolean huskRidableInWater = true;
 +    public boolean huskControllable = true;
 +    private void huskSettings() {
 +        huskRidable = getBoolean("mobs.husk.ridable", huskRidable);
@@ -5523,7 +5490,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean illusionerRidable = false;
-+    public boolean illusionerRidableInWater = false;
++    public boolean illusionerRidableInWater = true;
 +    public boolean illusionerControllable = true;
 +    private void illusionerSettings() {
 +        illusionerRidable = getBoolean("mobs.illusioner.ridable", illusionerRidable);
@@ -5532,7 +5499,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean ironGolemRidable = false;
-+    public boolean ironGolemRidableInWater = false;
++    public boolean ironGolemRidableInWater = true;
 +    public boolean ironGolemControllable = true;
 +    public boolean ironGolemCanSwim = false;
 +    private void ironGolemSettings() {
@@ -5552,7 +5519,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean magmaCubeRidable = false;
-+    public boolean magmaCubeRidableInWater = false;
++    public boolean magmaCubeRidableInWater = true;
 +    public boolean magmaCubeControllable = true;
 +    private void magmaCubeSettings() {
 +        magmaCubeRidable = getBoolean("mobs.magma_cube.ridable", magmaCubeRidable);
@@ -5561,7 +5528,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean mooshroomRidable = false;
-+    public boolean mooshroomRidableInWater = false;
++    public boolean mooshroomRidableInWater = true;
 +    public boolean mooshroomControllable = true;
 +    private void mooshroomSettings() {
 +        mooshroomRidable = getBoolean("mobs.mooshroom.ridable", mooshroomRidable);
@@ -5575,7 +5542,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean ocelotRidable = false;
-+    public boolean ocelotRidableInWater = false;
++    public boolean ocelotRidableInWater = true;
 +    public boolean ocelotControllable = true;
 +    private void ocelotSettings() {
 +        ocelotRidable = getBoolean("mobs.ocelot.ridable", ocelotRidable);
@@ -5584,7 +5551,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean pandaRidable = false;
-+    public boolean pandaRidableInWater = false;
++    public boolean pandaRidableInWater = true;
 +    public boolean pandaControllable = true;
 +    private void pandaSettings() {
 +        pandaRidable = getBoolean("mobs.panda.ridable", pandaRidable);
@@ -5593,7 +5560,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean parrotRidable = false;
-+    public boolean parrotRidableInWater = false;
++    public boolean parrotRidableInWater = true;
 +    public boolean parrotControllable = true;
 +    public double parrotMaxY = 320D;
 +    private void parrotSettings() {
@@ -5604,7 +5571,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean phantomRidable = false;
-+    public boolean phantomRidableInWater = false;
++    public boolean phantomRidableInWater = true;
 +    public boolean phantomControllable = true;
 +    public double phantomMaxY = 320D;
 +    public float phantomFlameDamage = 1.0F;
@@ -5630,7 +5597,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean piglinRidable = false;
-+    public boolean piglinRidableInWater = false;
++    public boolean piglinRidableInWater = true;
 +    public boolean piglinControllable = true;
 +    private void piglinSettings() {
 +        piglinRidable = getBoolean("mobs.piglin.ridable", piglinRidable);
@@ -5639,7 +5606,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean piglinBruteRidable = false;
-+    public boolean piglinBruteRidableInWater = false;
++    public boolean piglinBruteRidableInWater = true;
 +    public boolean piglinBruteControllable = true;
 +    private void piglinBruteSettings() {
 +        piglinBruteRidable = getBoolean("mobs.piglin_brute.ridable", piglinBruteRidable);
@@ -5648,7 +5615,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean pillagerRidable = false;
-+    public boolean pillagerRidableInWater = false;
++    public boolean pillagerRidableInWater = true;
 +    public boolean pillagerControllable = true;
 +    private void pillagerSettings() {
 +        pillagerRidable = getBoolean("mobs.pillager.ridable", pillagerRidable);
@@ -5657,7 +5624,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean polarBearRidable = false;
-+    public boolean polarBearRidableInWater = false;
++    public boolean polarBearRidableInWater = true;
 +    public boolean polarBearControllable = true;
 +    private void polarBearSettings() {
 +        polarBearRidable = getBoolean("mobs.polar_bear.ridable", polarBearRidable);
@@ -5673,7 +5640,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean rabbitRidable = false;
-+    public boolean rabbitRidableInWater = false;
++    public boolean rabbitRidableInWater = true;
 +    public boolean rabbitControllable = true;
 +    private void rabbitSettings() {
 +        rabbitRidable = getBoolean("mobs.rabbit.ridable", rabbitRidable);
@@ -5698,7 +5665,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean sheepRidable = false;
-+    public boolean sheepRidableInWater = false;
++    public boolean sheepRidableInWater = true;
 +    public boolean sheepControllable = true;
 +    private void sheepSettings() {
 +        sheepRidable = getBoolean("mobs.sheep.ridable", sheepRidable);
@@ -5707,7 +5674,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean shulkerRidable = false;
-+    public boolean shulkerRidableInWater = false;
++    public boolean shulkerRidableInWater = true;
 +    public boolean shulkerControllable = true;
 +    private void shulkerSettings() {
 +        shulkerRidable = getBoolean("mobs.shulker.ridable", shulkerRidable);
@@ -5716,7 +5683,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean silverfishRidable = false;
-+    public boolean silverfishRidableInWater = false;
++    public boolean silverfishRidableInWater = true;
 +    public boolean silverfishControllable = true;
 +    private void silverfishSettings() {
 +        silverfishRidable = getBoolean("mobs.silverfish.ridable", silverfishRidable);
@@ -5725,7 +5692,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean skeletonRidable = false;
-+    public boolean skeletonRidableInWater = false;
++    public boolean skeletonRidableInWater = true;
 +    public boolean skeletonControllable = true;
 +    private void skeletonSettings() {
 +        skeletonRidable = getBoolean("mobs.skeleton.ridable", skeletonRidable);
@@ -5741,7 +5708,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean slimeRidable = false;
-+    public boolean slimeRidableInWater = false;
++    public boolean slimeRidableInWater = true;
 +    public boolean slimeControllable = true;
 +    private void slimeSettings() {
 +        slimeRidable = getBoolean("mobs.slime.ridable", slimeRidable);
@@ -5750,7 +5717,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean snowGolemRidable = false;
-+    public boolean snowGolemRidableInWater = false;
++    public boolean snowGolemRidableInWater = true;
 +    public boolean snowGolemControllable = true;
 +    public boolean snowGolemLeaveTrailWhenRidden = false;
 +    private void snowGolemSettings() {
@@ -5758,6 +5725,15 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +        snowGolemRidableInWater = getBoolean("mobs.snow_golem.ridable-in-water", snowGolemRidableInWater);
 +        snowGolemControllable = getBoolean("mobs.snow_golem.controllable", snowGolemControllable);
 +        snowGolemLeaveTrailWhenRidden = getBoolean("mobs.snow_golem.leave-trail-when-ridden", snowGolemLeaveTrailWhenRidden);
++    }
++
++    public boolean snifferRidable = false;
++    public boolean snifferRidableInWater = true;
++    public boolean snifferControllable = true;
++    private void snifferSettings() {
++        snifferRidable = getBoolean("mobs.sniffer.ridable", snifferRidable);
++        snifferRidableInWater = getBoolean("mobs.sniffer.ridable-in-water", snifferRidableInWater);
++        snifferControllable = getBoolean("mobs.sniffer.controllable", snifferControllable);
 +    }
 +
 +    public boolean squidRidable = false;
@@ -5777,7 +5753,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean strayRidable = false;
-+    public boolean strayRidableInWater = false;
++    public boolean strayRidableInWater = true;
 +    public boolean strayControllable = true;
 +    private void straySettings() {
 +        strayRidable = getBoolean("mobs.stray.ridable", strayRidable);
@@ -5795,7 +5771,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean tadpoleRidable = false;
-+    public boolean tadpoleRidableInWater = false;
++    public boolean tadpoleRidableInWater = true;
 +    public boolean tadpoleControllable = true;
 +    private void tadpoleSettings() {
 +        tadpoleRidable = getBoolean("mobs.tadpole.ridable", tadpoleRidable);
@@ -5820,7 +5796,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean turtleRidable = false;
-+    public boolean turtleRidableInWater = false;
++    public boolean turtleRidableInWater = true;
 +    public boolean turtleControllable = true;
 +    private void turtleSettings() {
 +        turtleRidable = getBoolean("mobs.turtle.ridable", turtleRidable);
@@ -5829,7 +5805,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean vexRidable = false;
-+    public boolean vexRidableInWater = false;
++    public boolean vexRidableInWater = true;
 +    public boolean vexControllable = true;
 +    public double vexMaxY = 320D;
 +    private void vexSettings() {
@@ -5840,7 +5816,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean villagerRidable = false;
-+    public boolean villagerRidableInWater = false;
++    public boolean villagerRidableInWater = true;
 +    public boolean villagerControllable = true;
 +    private void villagerSettings() {
 +        villagerRidable = getBoolean("mobs.villager.ridable", villagerRidable);
@@ -5849,7 +5825,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean vindicatorRidable = false;
-+    public boolean vindicatorRidableInWater = false;
++    public boolean vindicatorRidableInWater = true;
 +    public boolean vindicatorControllable = true;
 +    private void vindicatorSettings() {
 +        vindicatorRidable = getBoolean("mobs.vindicator.ridable", vindicatorRidable);
@@ -5858,7 +5834,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean wanderingTraderRidable = false;
-+    public boolean wanderingTraderRidableInWater = false;
++    public boolean wanderingTraderRidableInWater = true;
 +    public boolean wanderingTraderControllable = true;
 +    private void wanderingTraderSettings() {
 +        wanderingTraderRidable = getBoolean("mobs.wandering_trader.ridable", wanderingTraderRidable);
@@ -5867,7 +5843,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean wardenRidable = false;
-+    public boolean wardenRidableInWater = false;
++    public boolean wardenRidableInWater = true;
 +    public boolean wardenControllable = true;
 +    private void wardenSettings() {
 +        wardenRidable = getBoolean("mobs.warden.ridable", wardenRidable);
@@ -5876,7 +5852,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean witchRidable = false;
-+    public boolean witchRidableInWater = false;
++    public boolean witchRidableInWater = true;
 +    public boolean witchControllable = true;
 +    private void witchSettings() {
 +        witchRidable = getBoolean("mobs.witch.ridable", witchRidable);
@@ -5885,7 +5861,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean witherRidable = false;
-+    public boolean witherRidableInWater = false;
++    public boolean witherRidableInWater = true;
 +    public boolean witherControllable = true;
 +    public double witherMaxY = 320D;
 +    private void witherSettings() {
@@ -5896,7 +5872,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean witherSkeletonRidable = false;
-+    public boolean witherSkeletonRidableInWater = false;
++    public boolean witherSkeletonRidableInWater = true;
 +    public boolean witherSkeletonControllable = true;
 +    private void witherSkeletonSettings() {
 +        witherSkeletonRidable = getBoolean("mobs.wither_skeleton.ridable", witherSkeletonRidable);
@@ -5905,7 +5881,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean wolfRidable = false;
-+    public boolean wolfRidableInWater = false;
++    public boolean wolfRidableInWater = true;
 +    public boolean wolfControllable = true;
 +    private void wolfSettings() {
 +        wolfRidable = getBoolean("mobs.wolf.ridable", wolfRidable);
@@ -5914,7 +5890,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean zoglinRidable = false;
-+    public boolean zoglinRidableInWater = false;
++    public boolean zoglinRidableInWater = true;
 +    public boolean zoglinControllable = true;
 +    private void zoglinSettings() {
 +        zoglinRidable = getBoolean("mobs.zoglin.ridable", zoglinRidable);
@@ -5923,7 +5899,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean zombieRidable = false;
-+    public boolean zombieRidableInWater = false;
++    public boolean zombieRidableInWater = true;
 +    public boolean zombieControllable = true;
 +    private void zombieSettings() {
 +        zombieRidable = getBoolean("mobs.zombie.ridable", zombieRidable);
@@ -5939,7 +5915,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean zombieVillagerRidable = false;
-+    public boolean zombieVillagerRidableInWater = false;
++    public boolean zombieVillagerRidableInWater = true;
 +    public boolean zombieVillagerControllable = true;
 +    private void zombieVillagerSettings() {
 +        zombieVillagerRidable = getBoolean("mobs.zombie_villager.ridable", zombieVillagerRidable);
@@ -5948,7 +5924,7 @@ index efbbe97d29561fa456b40292328eed89650f4322..a258de586a26c43f0316468f0a49e2da
 +    }
 +
 +    public boolean zombifiedPiglinRidable = false;
-+    public boolean zombifiedPiglinRidableInWater = false;
++    public boolean zombifiedPiglinRidableInWater = true;
 +    public boolean zombifiedPiglinControllable = true;
 +    private void zombifiedPiglinSettings() {
 +        zombifiedPiglinRidable = getBoolean("mobs.zombified_piglin.ridable", zombifiedPiglinRidable);
@@ -6337,7 +6313,7 @@ index 0000000000000000000000000000000000000000..ba2a37dad43e238e54632975abea8ee6
 +}
 diff --git a/src/main/java/org/purpurmc/purpur/entity/DolphinSpit.java b/src/main/java/org/purpurmc/purpur/entity/DolphinSpit.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..d55f7611599b2a339293688861100cb8dae9f6c6
+index 0000000000000000000000000000000000000000..602df34e3ec0d05f58737a54a1e8585e8730095c
 --- /dev/null
 +++ b/src/main/java/org/purpurmc/purpur/entity/DolphinSpit.java
 @@ -0,0 +1,99 @@
@@ -6426,7 +6402,7 @@ index 0000000000000000000000000000000000000000..d55f7611599b2a339293688861100cb8
 +    protected void onHitEntity(EntityHitResult entityHitResult) {
 +        Entity shooter = this.getOwner();
 +        if (shooter instanceof LivingEntity) {
-+            entityHitResult.getEntity().hurt(DamageSource.indirectMobAttack(this, (LivingEntity) shooter).setProjectile(), level.purpurConfig.dolphinSpitDamage);
++            entityHitResult.getEntity().hurt(entityHitResult.getEntity().damageSources().mobProjectile(this, (LivingEntity) shooter), level.purpurConfig.dolphinSpitDamage);
 +        }
 +    }
 +
@@ -6442,7 +6418,7 @@ index 0000000000000000000000000000000000000000..d55f7611599b2a339293688861100cb8
 +}
 diff --git a/src/main/java/org/purpurmc/purpur/entity/PhantomFlames.java b/src/main/java/org/purpurmc/purpur/entity/PhantomFlames.java
 new file mode 100644
-index 0000000000000000000000000000000000000000..2eca8317e991ec46cc88a4c7d6d8b50152ba4ea7
+index 0000000000000000000000000000000000000000..9ee7fc642d05fd61d91d09c754c6f0680bc39e56
 --- /dev/null
 +++ b/src/main/java/org/purpurmc/purpur/entity/PhantomFlames.java
 @@ -0,0 +1,114 @@
@@ -6540,7 +6516,7 @@ index 0000000000000000000000000000000000000000..2eca8317e991ec46cc88a4c7d6d8b501
 +        if (shooter instanceof LivingEntity) {
 +            Entity target = entityHitResult.getEntity();
 +            if (canGrief || (target instanceof LivingEntity && !(target instanceof ArmorStand))) {
-+                boolean hurt = target.hurt(DamageSource.indirectMobAttack(this, (LivingEntity) shooter).setProjectile(), level.purpurConfig.phantomFlameDamage);
++                boolean hurt = target.hurt(target.damageSources().mobProjectile(this, (LivingEntity) shooter), level.purpurConfig.phantomFlameDamage);
 +                if (hurt && level.purpurConfig.phantomFlameFireTime > 0) {
 +                    target.setSecondsOnFire(level.purpurConfig.phantomFlameFireTime);
 +                }

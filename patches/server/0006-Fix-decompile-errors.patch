@@ -5,15 +5,15 @@ Subject: [PATCH] Fix decompile errors
 
 
 diff --git a/src/main/java/net/minecraft/world/entity/decoration/Painting.java b/src/main/java/net/minecraft/world/entity/decoration/Painting.java
-index 0c5caad2a5bfc14450cf8d37f988ee176e8d1450..05a0a890a719a957d9aea736d6c0e85bae9e4eec 100644
+index ad0df80d1adb1d945f40e1b5f7732bb36b2ca2ff..cefb3d0658e56c7c103626b8cfc5faa05f03665b 100644
 --- a/src/main/java/net/minecraft/world/entity/decoration/Painting.java
 +++ b/src/main/java/net/minecraft/world/entity/decoration/Painting.java
-@@ -124,7 +124,7 @@ public class Painting extends HangingEntity implements VariantHolder<Holder<Pain
-             return ResourceKey.create(Registries.PAINTING_VARIANT, id);
-         }).flatMap(BuiltInRegistries.PAINTING_VARIANT::getHolder).map((entry) -> {
-             return entry;
--        }).orElseGet(Painting::getDefaultVariant);
-+        }).orElseGet(() -> (Holder.Reference<PaintingVariant>) getDefaultVariant()); // Purpur - decompile error
+@@ -121,7 +121,7 @@ public class Painting extends HangingEntity implements VariantHolder<Holder<Pain
+ 
+     @Override
+     public void readAdditionalSaveData(CompoundTag nbt) {
+-        Holder<PaintingVariant> holder = loadVariant(nbt).orElseGet(Painting::getDefaultVariant);
++        Holder<PaintingVariant> holder = loadVariant(nbt).orElseGet(() -> (Holder.Reference<PaintingVariant>) getDefaultVariant()); // Purpur - decompile error TODO: still needed?
          this.setVariant(holder);
          this.direction = Direction.from2DDataValue(nbt.getByte("facing"));
          super.readAdditionalSaveData(nbt);
@@ -44,10 +44,10 @@ index ac75c54e897565e340b66823caeed92ba1d1641a..769e4fbaac01a4fe3a45bd9cab5c63b6
  
      @Override
 diff --git a/src/main/java/net/minecraft/world/level/block/Blocks.java b/src/main/java/net/minecraft/world/level/block/Blocks.java
-index 42f46d338886e2892ee4219d19be4dc97f61616f..fdd3aa81644087bff33a47c5f98e14ca0452f3ef 100644
+index f148c7d2954cc17377d0da4af03ea2c1c9397a52..8584a65433555133cdcfc24a078fb0b53b9f83bc 100644
 --- a/src/main/java/net/minecraft/world/level/block/Blocks.java
 +++ b/src/main/java/net/minecraft/world/level/block/Blocks.java
-@@ -1127,7 +1127,7 @@ public class Blocks {
+@@ -1153,7 +1153,7 @@ public class Blocks {
      }
  
      private static Boolean ocelotOrParrot(BlockState state, BlockGetter world, BlockPos pos, EntityType<?> type) {

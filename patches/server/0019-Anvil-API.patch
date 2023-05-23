@@ -5,7 +5,7 @@ Subject: [PATCH] Anvil API
 
 
 diff --git a/src/main/java/net/minecraft/world/inventory/AbstractContainerMenu.java b/src/main/java/net/minecraft/world/inventory/AbstractContainerMenu.java
-index 95ba37458e8154dbce6a8590508840d694fcbed1..8b198d31578c4618f730d572844292ae3bdda2c7 100644
+index c84908095a93d42826b21bf5f3490410fb0a5708..20b328704981c088597359fe18c1d67c339c1c0f 100644
 --- a/src/main/java/net/minecraft/world/inventory/AbstractContainerMenu.java
 +++ b/src/main/java/net/minecraft/world/inventory/AbstractContainerMenu.java
 @@ -76,6 +76,7 @@ public abstract class AbstractContainerMenu {
@@ -17,7 +17,7 @@ index 95ba37458e8154dbce6a8590508840d694fcbed1..8b198d31578c4618f730d572844292ae
      // CraftBukkit start
      public boolean checkReachable = true;
 diff --git a/src/main/java/net/minecraft/world/inventory/AnvilMenu.java b/src/main/java/net/minecraft/world/inventory/AnvilMenu.java
-index 506d758efbf16da9467f120321d2359a8832e477..0363d2263b2d6bd6166fa21d7849297e95eddd77 100644
+index b7a2295290227045e6426ee0f71707185d95b943..8475a8514b39d543cc7cf0dbfef6d2aabb6127d0 100644
 --- a/src/main/java/net/minecraft/world/inventory/AnvilMenu.java
 +++ b/src/main/java/net/minecraft/world/inventory/AnvilMenu.java
 @@ -21,6 +21,13 @@ import org.slf4j.Logger;
@@ -33,8 +33,8 @@ index 506d758efbf16da9467f120321d2359a8832e477..0363d2263b2d6bd6166fa21d7849297e
 +
  public class AnvilMenu extends ItemCombinerMenu {
  
-     private static final Logger LOGGER = LogUtils.getLogger();
-@@ -41,6 +48,8 @@ public class AnvilMenu extends ItemCombinerMenu {
+     public static final int INPUT_SLOT = 0;
+@@ -48,6 +55,8 @@ public class AnvilMenu extends ItemCombinerMenu {
      public int maximumRepairCost = 40;
      private CraftInventoryView bukkitEntity;
      // CraftBukkit end
@@ -43,7 +43,7 @@ index 506d758efbf16da9467f120321d2359a8832e477..0363d2263b2d6bd6166fa21d7849297e
  
      public AnvilMenu(int syncId, Inventory inventory) {
          this(syncId, inventory, ContainerLevelAccess.NULL);
-@@ -59,12 +68,15 @@ public class AnvilMenu extends ItemCombinerMenu {
+@@ -75,12 +84,15 @@ public class AnvilMenu extends ItemCombinerMenu {
  
      @Override
      protected boolean mayPickup(Player player, boolean present) {
@@ -60,7 +60,7 @@ index 506d758efbf16da9467f120321d2359a8832e477..0363d2263b2d6bd6166fa21d7849297e
              player.giveExperienceLevels(-this.cost.get());
          }
  
-@@ -115,6 +127,12 @@ public class AnvilMenu extends ItemCombinerMenu {
+@@ -131,6 +143,12 @@ public class AnvilMenu extends ItemCombinerMenu {
  
      @Override
      public void createResult() {
@@ -73,7 +73,7 @@ index 506d758efbf16da9467f120321d2359a8832e477..0363d2263b2d6bd6166fa21d7849297e
          ItemStack itemstack = this.inputSlots.getItem(0);
  
          this.cost.set(1);
-@@ -191,7 +209,7 @@ public class AnvilMenu extends ItemCombinerMenu {
+@@ -207,7 +225,7 @@ public class AnvilMenu extends ItemCombinerMenu {
                              int i2 = (Integer) map1.get(enchantment);
  
                              i2 = l1 == i2 ? i2 + 1 : Math.max(i2, l1);
@@ -82,7 +82,7 @@ index 506d758efbf16da9467f120321d2359a8832e477..0363d2263b2d6bd6166fa21d7849297e
  
                              if (this.player.getAbilities().instabuild || itemstack.is(Items.ENCHANTED_BOOK)) {
                                  flag3 = true;
-@@ -203,7 +221,7 @@ public class AnvilMenu extends ItemCombinerMenu {
+@@ -219,7 +237,7 @@ public class AnvilMenu extends ItemCombinerMenu {
                                  Enchantment enchantment1 = (Enchantment) iterator1.next();
  
                                  if (enchantment1 != enchantment && !enchantment.isCompatibleWith(enchantment1)) {
@@ -91,7 +91,7 @@ index 506d758efbf16da9467f120321d2359a8832e477..0363d2263b2d6bd6166fa21d7849297e
                                      ++i;
                                  }
                              }
-@@ -274,6 +292,13 @@ public class AnvilMenu extends ItemCombinerMenu {
+@@ -290,6 +308,13 @@ public class AnvilMenu extends ItemCombinerMenu {
                  this.cost.set(this.maximumRepairCost - 1); // CraftBukkit
              }
  
@@ -105,7 +105,7 @@ index 506d758efbf16da9467f120321d2359a8832e477..0363d2263b2d6bd6166fa21d7849297e
              if (this.cost.get() >= this.maximumRepairCost && !this.player.getAbilities().instabuild) { // CraftBukkit
                  itemstack1 = ItemStack.EMPTY;
              }
-@@ -296,6 +321,12 @@ public class AnvilMenu extends ItemCombinerMenu {
+@@ -312,6 +337,12 @@ public class AnvilMenu extends ItemCombinerMenu {
              org.bukkit.craftbukkit.event.CraftEventFactory.callPrepareAnvilEvent(this.getBukkitView(), itemstack1); // CraftBukkit
              sendAllDataToRemote(); // CraftBukkit - SPIGOT-6686: Always send completed inventory to stay in sync with client
              this.broadcastChanges();
@@ -119,10 +119,10 @@ index 506d758efbf16da9467f120321d2359a8832e477..0363d2263b2d6bd6166fa21d7849297e
      }
  
 diff --git a/src/main/java/net/minecraft/world/inventory/ItemCombinerMenu.java b/src/main/java/net/minecraft/world/inventory/ItemCombinerMenu.java
-index c34a66310969c3c837d09693159b827c1edddd3b..25885eb3b7312bd317fc519ad420109ff6531c7d 100644
+index ff770b9ce68a62418de0c7ed389650626fa1dcb2..102739c0089ff3f6b3432f954304d43a3dfebc35 100644
 --- a/src/main/java/net/minecraft/world/inventory/ItemCombinerMenu.java
 +++ b/src/main/java/net/minecraft/world/inventory/ItemCombinerMenu.java
-@@ -140,7 +140,9 @@ public abstract class ItemCombinerMenu extends AbstractContainerMenu {
+@@ -177,7 +177,9 @@ public abstract class ItemCombinerMenu extends AbstractContainerMenu {
                  return ItemStack.EMPTY;
              }
  

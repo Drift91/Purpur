@@ -5,10 +5,10 @@ Subject: [PATCH] ItemStack convenience methods
 
 
 diff --git a/src/main/java/org/bukkit/Material.java b/src/main/java/org/bukkit/Material.java
-index 6bbb47d1f9d8d45326232024e82a0ebaf764fae7..2a22d0639d63a3db4e7bded2d4e91b09bb93a95e 100644
+index adb2416887cc3b544ec36c552bdf7105328c24a5..d334c963e16590c68ecd9d1d27434c7af6f7e21c 100644
 --- a/src/main/java/org/bukkit/Material.java
 +++ b/src/main/java/org/bukkit/Material.java
-@@ -10753,4 +10753,40 @@ public enum Material implements Keyed, Translatable, net.kyori.adventure.transla
+@@ -11156,4 +11156,40 @@ public enum Material implements Keyed, Translatable, net.kyori.adventure.transla
      public String getItemTranslationKey() {
          return Bukkit.getUnsafe().getItemTranslationKey(this);
      }
@@ -50,7 +50,7 @@ index 6bbb47d1f9d8d45326232024e82a0ebaf764fae7..2a22d0639d63a3db4e7bded2d4e91b09
 +    // Purpur end
  }
 diff --git a/src/main/java/org/bukkit/inventory/ItemStack.java b/src/main/java/org/bukkit/inventory/ItemStack.java
-index 449d6e1995eedbfaeffdc5d1f1c2295378006aa8..11261c659e3a378f468f4a19e2c24c1bb1f95a2b 100644
+index d15a74c38576c49df61cfab02c70fc5d8c0dd5f7..64055402076b62d32ba947830d935b79bae12d95 100644
 --- a/src/main/java/org/bukkit/inventory/ItemStack.java
 +++ b/src/main/java/org/bukkit/inventory/ItemStack.java
 @@ -17,6 +17,18 @@ import org.bukkit.inventory.meta.ItemMeta;

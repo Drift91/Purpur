@@ -5,41 +5,45 @@ Subject: [PATCH] Rebrand
 
 
 diff --git a/build.gradle.kts b/build.gradle.kts
-index d9ace6cd8e9cbf088e6664469fb94df0c964998f..f25c0557cf984b97e0ab361f579eccbf46f82170 100644
+index b41b186397d013c19436c345be98b785d4bd0295..22470f0ab8354a9f31a0f195f3fe80f2f5ee2f0e 100644
 --- a/build.gradle.kts
 +++ b/build.gradle.kts
-@@ -7,9 +7,9 @@ plugins {
+@@ -7,12 +7,8 @@ plugins {
  }
  
  dependencies {
 -    implementation(project(":pufferfish-api")) // Pufferfish // Paper
-+    implementation(project(":purpur-api")) // Purpur
-     // Pufferfish start
+-    // Pufferfish start
 -    implementation("io.papermc.paper:paper-mojangapi:1.19.2-R0.1-SNAPSHOT") {
-+    implementation("io.papermc.paper:paper-mojangapi:1.19.3-R0.1-SNAPSHOT") {
-         exclude("io.papermc.paper", "paper-api")
+-        exclude("io.papermc.paper", "paper-api")
+-    }
+-    // Pufferfish end
++    implementation(project(":purpur-api")) // Purpur
++    implementation("io.papermc.paper:paper-mojangapi:1.19.4-R0.1-SNAPSHOT") // Purpur
+     // Paper start
+     implementation("org.jline:jline-terminal-jansi:3.21.0")
+     implementation("net.minecrell:terminalconsoleappender:1.3.0")
+@@ -42,6 +38,10 @@ dependencies {
      }
-     // Pufferfish end
-@@ -42,6 +42,9 @@ dependencies {
-     runtimeOnly("mysql:mysql-connector-java:8.0.29")
-     runtimeOnly("com.lmax:disruptor:3.4.4") // Paper
+     // Paper end
  
-+    implementation("cat.inspiracio:rhino-js-engine:1.7.7.1") // Purpur
++    implementation("org.mozilla:rhino-runtime:1.7.14") // Purpur
++    implementation("org.mozilla:rhino-engine:1.7.14") // Purpur
 +    implementation("dev.omega24:upnp4j:1.0") // Purpur
 +
      runtimeOnly("org.apache.maven:maven-resolver-provider:3.8.5")
      runtimeOnly("org.apache.maven.resolver:maven-resolver-connector-basic:1.7.3")
      runtimeOnly("org.apache.maven.resolver:maven-resolver-transport-http:1.7.3")
-@@ -81,7 +84,7 @@ tasks.jar {
+@@ -81,7 +81,7 @@ tasks.jar {
          attributes(
              "Main-Class" to "org.bukkit.craftbukkit.Main",
              "Implementation-Title" to "CraftBukkit",
 -            "Implementation-Version" to "git-Pufferfish-$implementationVersion", // Pufferfish
-+            "Implementation-Version" to "git-Purpur-$implementationVersion", // Purpur
++            "Implementation-Version" to "git-Purpur-$implementationVersion", // Pufferfish // Purpur
              "Implementation-Vendor" to date, // Paper
              "Specification-Title" to "Bukkit",
              "Specification-Version" to project.version,
-@@ -153,7 +156,7 @@ fun TaskContainer.registerRunTask(
+@@ -153,7 +153,7 @@ fun TaskContainer.registerRunTask(
      name: String,
      block: JavaExec.() -> Unit
  ): TaskProvider<JavaExec> = register<JavaExec>(name) {
@@ -49,7 +53,7 @@ index d9ace6cd8e9cbf088e6664469fb94df0c964998f..f25c0557cf984b97e0ab361f579eccbf
      standardInput = System.`in`
      workingDir = rootProject.layout.projectDirectory
 diff --git a/src/main/java/com/destroystokyo/paper/PaperVersionFetcher.java b/src/main/java/com/destroystokyo/paper/PaperVersionFetcher.java
-index bf42969859545a8a520923ef1836ffa4a5cc24a0..fba5dbdb7bcbb55400ef18342c9b54612972a718 100644
+index 9d687da5bdf398bb3f6c84cdf1249a7213d09f2e..462a6eed350fd660ddaf25d567bb6e97b77d0b2b 100644
 --- a/src/main/java/com/destroystokyo/paper/PaperVersionFetcher.java
 +++ b/src/main/java/com/destroystokyo/paper/PaperVersionFetcher.java
 @@ -19,8 +19,10 @@ import java.util.stream.StreamSupport;
@@ -57,7 +61,7 @@ index bf42969859545a8a520923ef1836ffa4a5cc24a0..fba5dbdb7bcbb55400ef18342c9b5461
  public class PaperVersionFetcher implements VersionFetcher {
      private static final java.util.regex.Pattern VER_PATTERN = java.util.regex.Pattern.compile("^([0-9\\.]*)\\-.*R"); // R is an anchor, will always give '-R' at end
 -    private static final String GITHUB_BRANCH_NAME = "master";
--    private static final String DOWNLOAD_PAGE = "https://papermc.io/downloads";
+-    private static final String DOWNLOAD_PAGE = "https://papermc.io/downloads/paper";
 +    // Purpur start
 +    private static final String DOWNLOAD_PAGE = "https://purpurmc.org/downloads";
 +    private static int distance = -2; public int distance() { return distance; }
@@ -109,7 +113,7 @@ index bf42969859545a8a520923ef1836ffa4a5cc24a0..fba5dbdb7bcbb55400ef18342c9b5461
 +                return Component.text("* You are running the latest version", NamedTextColor.GREEN); // Purpur
              case -2:
 -                return Component.text("Unknown version", NamedTextColor.YELLOW);
-+                return Component.text("* Unknown version", NamedTextColor.RED); // Purpur
++                return Component.text("* Unknown version", NamedTextColor.YELLOW); // Purpur
              default:
 -                return Component.text("You are " + distance + " version(s) behind", NamedTextColor.YELLOW)
 +                return Component.text("* You are " + distance + " version(s) behind", NamedTextColor.YELLOW) // Purpur
@@ -171,10 +175,10 @@ index abe37c7c3c6f5ab73afd738ec78f06d7e4d2ed96..b5b6657e52e4f7a630229bd3ba433438
          stringbuilder.append(CrashReport.getErrorComment());
          stringbuilder.append("\n\n");
 diff --git a/src/main/java/net/minecraft/server/MinecraftServer.java b/src/main/java/net/minecraft/server/MinecraftServer.java
-index 68d16efaf9c2d997afabadcf1ee24c5de685b5b3..861cd9f092a19aca520c2be4ba7a6ee3d9aee263 100644
+index a29d92b3f2658b63545b25092bb3a1fea46ca36b..0f6d1c56efbab0f9b84f09f7dc27eb705f4006a9 100644
 --- a/src/main/java/net/minecraft/server/MinecraftServer.java
 +++ b/src/main/java/net/minecraft/server/MinecraftServer.java
-@@ -924,7 +924,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -927,7 +927,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
          shutdownThread = Thread.currentThread();
          org.spigotmc.WatchdogThread.doStop(); // Paper
          if (!isSameThread()) {
@@ -183,30 +187,30 @@ index 68d16efaf9c2d997afabadcf1ee24c5de685b5b3..861cd9f092a19aca520c2be4ba7a6ee3
              while (this.getRunningThread().isAlive()) {
                  this.getRunningThread().stop();
                  try {
-@@ -1656,7 +1656,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
+@@ -1684,7 +1684,7 @@ public abstract class MinecraftServer extends ReentrantBlockableEventLoop<TickTa
  
      @DontObfuscate
      public String getServerModName() {
 -        return "Pufferfish"; // Pufferfish - Pufferfish > // Paper - Paper > // Spigot - Spigot > // CraftBukkit - cb > vanilla!
-+        return "Purpur"; // Purpur - Purpur > // Paper - Paper > // Spigot - Spigot > // CraftBukkit - cb > vanilla!
++        return "Purpur"; // Purpur - Purpur > // Pufferfish - Pufferfish > // Paper - Paper > // Spigot - Spigot > // CraftBukkit - cb > vanilla!
      }
  
      public SystemReport fillSystemReport(SystemReport details) {
 diff --git a/src/main/java/org/bukkit/craftbukkit/CraftServer.java b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-index c7fc5fcd28812fdc758842b06a6781b2c0e4f3cb..22c9cbb8f0d43650a8d021fac8b9efae4478c9e6 100644
+index e38391da44a1b5e3b845eba2d80453021a1e0c25..fa82680d6b8a28668b25b32bcbd34bddc9565c9c 100644
 --- a/src/main/java/org/bukkit/craftbukkit/CraftServer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/CraftServer.java
-@@ -261,7 +261,7 @@ import javax.annotation.Nullable; // Paper
+@@ -257,7 +257,7 @@ import javax.annotation.Nullable; // Paper
  import javax.annotation.Nonnull; // Paper
  
  public final class CraftServer implements Server {
 -    private final String serverName = "Pufferfish"; // Paper // Pufferfish
-+    private final String serverName = "Purpur"; // Paper // Purpur
++    private final String serverName = "Purpur"; // Paper // Pufferfish // Purpur
      private final String serverVersion;
      private final String bukkitVersion = Versioning.getBukkitVersion();
      private final Logger logger = Logger.getLogger("Minecraft");
 diff --git a/src/main/java/org/bukkit/craftbukkit/command/CraftConsoleCommandSender.java b/src/main/java/org/bukkit/craftbukkit/command/CraftConsoleCommandSender.java
-index 4e56018b64d11f76c8da43fd8f85c6de72204e36..aa8212432825db65cf485cd93f734ccd9eefcb5a 100644
+index 4e56018b64d11f76c8da43fd8f85c6de72204e36..9607675e6c5bff2183c4420d11fc63eeb5747fb6 100644
 --- a/src/main/java/org/bukkit/craftbukkit/command/CraftConsoleCommandSender.java
 +++ b/src/main/java/org/bukkit/craftbukkit/command/CraftConsoleCommandSender.java
 @@ -21,7 +21,12 @@ public class CraftConsoleCommandSender extends ServerCommandSender implements Co
@@ -217,7 +221,7 @@ index 4e56018b64d11f76c8da43fd8f85c6de72204e36..aa8212432825db65cf485cd93f734ccd
 +        // Purpur start
 +        String[] parts = message.split("\n");
 +        for (String part : parts) {
-+            this.sendRawMessage(part);
++        this.sendRawMessage(part);
 +        }
 +        // Purpur end
      }
@@ -233,10 +237,10 @@ index 4e56018b64d11f76c8da43fd8f85c6de72204e36..aa8212432825db65cf485cd93f734ccd
  
      @Override
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftLivingEntity.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftLivingEntity.java
-index 2cff68a5c448c0e971d95e9264223eb943730968..db5952e97c5ff5c258760b70592f9ad470ce401c 100644
+index d43859f8aa7beed82dd3a146bb1086982cd0cda7..b548f06bc0569f0f1ee5edaa07806c3017d5399a 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftLivingEntity.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftLivingEntity.java
-@@ -883,7 +883,7 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
+@@ -884,7 +884,7 @@ public class CraftLivingEntity extends CraftEntity implements LivingEntity {
              return EntityCategory.WATER;
          }
  
@@ -259,10 +263,10 @@ index cdefb2025eedea7e204d70d568adaf1c1ec4c03c..d1526ed7197b883e1d1f07baf285bf5e
                  // (async tasks must live with race-conditions if they attempt to cancel between these few lines of code)
              }
 diff --git a/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java b/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java
-index 74fb5a9ae82ace67f7ced202b81bbe864f59308a..1395609e4656c4b6a1ca17f34eba1398c0927ee6 100644
+index d4f62940504e3ef7a70e13b1f4a7726f23b4c637..1dd7f923dd6adb41eafc3ea0c063e3aae6670124 100644
 --- a/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java
 +++ b/src/main/java/org/bukkit/craftbukkit/util/CraftMagicNumbers.java
-@@ -457,7 +457,7 @@ public final class CraftMagicNumbers implements UnsafeValues {
+@@ -464,7 +464,7 @@ public final class CraftMagicNumbers implements UnsafeValues {
  
      @Override
      public com.destroystokyo.paper.util.VersionFetcher getVersionFetcher() {
@@ -272,7 +276,7 @@ index 74fb5a9ae82ace67f7ced202b81bbe864f59308a..1395609e4656c4b6a1ca17f34eba1398
  
      @Override
 diff --git a/src/main/java/org/bukkit/craftbukkit/util/Versioning.java b/src/main/java/org/bukkit/craftbukkit/util/Versioning.java
-index 80553face9c70c2a3d897681e7761df85b22d464..fb87620c742ff7912f5e8ccd2a7930dd605576d9 100644
+index 80553face9c70c2a3d897681e7761df85b22d464..99597258e8e88cd9e2c901c4ac3ff7faeeabee2b 100644
 --- a/src/main/java/org/bukkit/craftbukkit/util/Versioning.java
 +++ b/src/main/java/org/bukkit/craftbukkit/util/Versioning.java
 @@ -11,7 +11,7 @@ public final class Versioning {
@@ -280,7 +284,7 @@ index 80553face9c70c2a3d897681e7761df85b22d464..fb87620c742ff7912f5e8ccd2a7930dd
          String result = "Unknown-Version";
  
 -        InputStream stream = Bukkit.class.getClassLoader().getResourceAsStream("META-INF/maven/gg.pufferfish.pufferfish/pufferfish-api/pom.properties"); // Pufferfish
-+        InputStream stream = Bukkit.class.getClassLoader().getResourceAsStream("META-INF/maven/org.purpurmc.purpur/purpur-api/pom.properties"); // Purpur
++        InputStream stream = Bukkit.class.getClassLoader().getResourceAsStream("META-INF/maven/org.purpurmc.purpur/purpur-api/pom.properties"); // Pufferfish // Purpur
          Properties properties = new Properties();
  
          if (stream != null) {

@@ -1,0 +1,60 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: DoctaEnkoda <bierquejason@gmail.com>
+Date: Mon, 9 Aug 2021 13:22:03 +0200
+Subject: [PATCH] Added the ability to add combustible items
+
+
+diff --git a/src/main/java/org/bukkit/Bukkit.java b/src/main/java/org/bukkit/Bukkit.java
+index a2ee324d32c48fa9d71768f9b1cf7efcae02a01d..72e8e8ff651cf254e0fe3a8927272ea8da0f5f5a 100644
+--- a/src/main/java/org/bukkit/Bukkit.java
++++ b/src/main/java/org/bukkit/Bukkit.java
+@@ -2479,5 +2479,24 @@ public final class Bukkit {
+     public static boolean isLagging() {
+         return server.isLagging();
+     }
++
++    /**
++     * Add an Item as fuel for furnaces
++     *
++     * @param material The material that will be the fuel
++     * @param burnTime The time (in ticks) this item will burn for
++     */
++    public static void addFuel(@NotNull Material material, int burnTime) {
++        server.addFuel(material, burnTime);
++    }
++
++    /**
++     * Remove an item as fuel for furnaces
++     *
++     * @param material The material that will no longer be a fuel
++     */
++    public static void removeFuel(@NotNull Material material) {
++        server.removeFuel(material);
++    }
+     // Purpur end
+ }
+diff --git a/src/main/java/org/bukkit/Server.java b/src/main/java/org/bukkit/Server.java
+index d16c5f0bd920291311ccf9870463aaaa98661578..8b53a9149f655870ebc1c912eeb9fecbcb4836b8 100644
+--- a/src/main/java/org/bukkit/Server.java
++++ b/src/main/java/org/bukkit/Server.java
+@@ -2162,5 +2162,20 @@ public interface Server extends PluginMessageRecipient, net.kyori.adventure.audi
+      * @return True if lagging
+      */
+     boolean isLagging();
++
++    /**
++     * Add an Item as fuel for furnaces
++     *
++     * @param material The material that will be the fuel
++     * @param burnTime The time (in ticks) this item will burn for
++     */
++    public void addFuel(@NotNull Material material, int burnTime);
++
++    /**
++     * Remove an item as fuel for furnaces
++     *
++     * @param material The material that will no longer be a fuel
++     */
++    public void removeFuel(@NotNull Material material);
+     // Purpur end
+ }

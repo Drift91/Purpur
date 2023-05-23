@@ -5,10 +5,10 @@ Subject: [PATCH] Fix pufferfish issues
 
 
 diff --git a/src/main/java/gg/pufferfish/pufferfish/PufferfishConfig.java b/src/main/java/gg/pufferfish/pufferfish/PufferfishConfig.java
-index 48582f98fde23f3f1544a7303da21b6d7d4c874e..5f3be4356a6d65ea2a7e4d013abd4501cedd7428 100644
+index 6e441a1a28ba72a8b1cc09fe5fca71b3c70627d4..5c691db595ee412b77f729e90172bc4f8ae57226 100644
 --- a/src/main/java/gg/pufferfish/pufferfish/PufferfishConfig.java
 +++ b/src/main/java/gg/pufferfish/pufferfish/PufferfishConfig.java
-@@ -222,7 +222,7 @@ public class PufferfishConfig {
+@@ -224,7 +224,7 @@ public class PufferfishConfig {
      public static int activationDistanceMod;
  
      private static void dynamicActivationOfBrains() throws IOException {
@@ -17,7 +17,7 @@ index 48582f98fde23f3f1544a7303da21b6d7d4c874e..5f3be4356a6d65ea2a7e4d013abd4501
          startDistance = getInt("dab.start-distance", "activation-range.start-distance", 12,
                  "This value determines how far away an entity has to be",
                  "from the player to start being effected by DEAR.");
-@@ -266,7 +266,7 @@ public class PufferfishConfig {
+@@ -268,7 +268,7 @@ public class PufferfishConfig {
      
      public static boolean throttleInactiveGoalSelectorTick;
  	private static void inactiveGoalSelectorThrottle() {
@@ -27,7 +27,7 @@ index 48582f98fde23f3f1544a7303da21b6d7d4c874e..5f3be4356a6d65ea2a7e4d013abd4501
  				"This can improve performance by a few percent, but has minor gameplay implications.");
  	}
 diff --git a/src/main/java/net/minecraft/server/level/ServerLevel.java b/src/main/java/net/minecraft/server/level/ServerLevel.java
-index 53198ebfa30273c5ddc1bb4324f5174ff99f688d..ccb905ad68465199516534a2ab74f7b3092297a8 100644
+index dda5e77f7d9fb2340d50997c0a17bc7f5e2bb961..a6da001a03760a6ae5d842d8aaeb8fc435883b1f 100644
 --- a/src/main/java/net/minecraft/server/level/ServerLevel.java
 +++ b/src/main/java/net/minecraft/server/level/ServerLevel.java
 @@ -807,7 +807,7 @@ public class ServerLevel extends Level implements WorldGenLevel {
@@ -40,10 +40,10 @@ index 53198ebfa30273c5ddc1bb4324f5174ff99f688d..ccb905ad68465199516534a2ab74f7b3
  
      private int currentIceAndSnowTick = 0; protected void resetIceAndSnowTick() { this.currentIceAndSnowTick = this.randomTickRandom.nextInt(16); } // Pufferfish
 diff --git a/src/main/java/net/minecraft/world/level/Level.java b/src/main/java/net/minecraft/world/level/Level.java
-index edd2c236ca7c37e1a3aec0048b8974f4cd62f2cc..42299fd6ae663b01bb5f010b96887caa744dcb96 100644
+index 6aec1983a0236d6aa0507a2b3ad1c08b3330f0fc..66cc44d9f14b01f6c8e53b0f990866ac897c1c81 100644
 --- a/src/main/java/net/minecraft/world/level/Level.java
 +++ b/src/main/java/net/minecraft/world/level/Level.java
-@@ -270,7 +270,7 @@ public abstract class Level implements LevelAccessor, AutoCloseable {
+@@ -274,7 +274,7 @@ public abstract class Level implements LevelAccessor, AutoCloseable {
  
      public abstract ResourceKey<LevelStem> getTypeKey();
  
@@ -53,15 +53,15 @@ index edd2c236ca7c37e1a3aec0048b8974f4cd62f2cc..42299fd6ae663b01bb5f010b96887caa
      // Pufferfish start - ensure these get inlined
      private final int minBuildHeight, minSection, height, maxBuildHeight, maxSection;
 diff --git a/src/main/java/net/minecraft/world/level/chunk/LevelChunk.java b/src/main/java/net/minecraft/world/level/chunk/LevelChunk.java
-index de7a5f3812a017131fd1b32fbeff10e325b1cd2e..aa327e549949052b5babf4101cc2fc9a37868fa8 100644
+index 13594b96cc8f451723c3598ef302ccee8e01bcac..96394bc930a8dab04cd7f5b6e0e9d457b11f58e3 100644
 --- a/src/main/java/net/minecraft/world/level/chunk/LevelChunk.java
 +++ b/src/main/java/net/minecraft/world/level/chunk/LevelChunk.java
-@@ -130,7 +130,7 @@ public class LevelChunk extends ChunkAccess {
+@@ -129,7 +129,7 @@ public class LevelChunk extends ChunkAccess {
+         this.blockTicks = blockTickScheduler;
          this.fluidTicks = fluidTickScheduler;
-         // CraftBukkit start
-         this.bukkitChunk = new org.bukkit.craftbukkit.CraftChunk(this);
+ 
 -        this.lightningTick = this.level.getThreadUnsafeRandom().nextInt(100000) << 1; // Pufferfish - initialize lightning tick
 +        this.lightningTick = java.util.concurrent.ThreadLocalRandom.current().nextInt(100000) << 1; // Pufferfish - initialize lightning tick // Purpur - any random will do
      }
  
-     public org.bukkit.Chunk bukkitChunk;
+     // CraftBukkit start

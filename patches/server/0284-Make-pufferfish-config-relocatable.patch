@@ -5,7 +5,7 @@ Subject: [PATCH] Make pufferfish config relocatable
 
 
 diff --git a/src/main/java/gg/pufferfish/pufferfish/PufferfishConfig.java b/src/main/java/gg/pufferfish/pufferfish/PufferfishConfig.java
-index 5f3be4356a6d65ea2a7e4d013abd4501cedd7428..f3593297929842b52e4467ed4386ab12586b1b70 100644
+index 5c691db595ee412b77f729e90172bc4f8ae57226..47e77541e558e18758ae0fcc2aa4e47261e928b6 100644
 --- a/src/main/java/gg/pufferfish/pufferfish/PufferfishConfig.java
 +++ b/src/main/java/gg/pufferfish/pufferfish/PufferfishConfig.java
 @@ -28,6 +28,7 @@ public class PufferfishConfig {
@@ -26,7 +26,7 @@ index 5f3be4356a6d65ea2a7e4d013abd4501cedd7428..f3593297929842b52e4467ed4386ab12
  		if (configFile.exists()) {
  			try {
 diff --git a/src/main/java/net/minecraft/server/dedicated/DedicatedServer.java b/src/main/java/net/minecraft/server/dedicated/DedicatedServer.java
-index 14c31ac94202e5266610869d3dd93b871cfb4557..46858fb57f122033a68aeb4ad3943132a677fb46 100644
+index bed0267d42a8dbbd2996bd19c65d09a5ab27b5d2..582467e3419c23446b20d3076fbfce22115250a8 100644
 --- a/src/main/java/net/minecraft/server/dedicated/DedicatedServer.java
 +++ b/src/main/java/net/minecraft/server/dedicated/DedicatedServer.java
 @@ -230,6 +230,7 @@ public class DedicatedServer extends MinecraftServer implements ServerInterface
@@ -38,10 +38,10 @@ index 14c31ac94202e5266610869d3dd93b871cfb4557..46858fb57f122033a68aeb4ad3943132
          gg.pufferfish.pufferfish.PufferfishCommand.init(); // Pufferfish
  
 diff --git a/src/main/java/org/bukkit/craftbukkit/Main.java b/src/main/java/org/bukkit/craftbukkit/Main.java
-index 8e706d752b6bbda353d85ce10cdb83a68a4f71d8..576cd8e20982bb20d10213b6c7a229428eec1c2f 100644
+index f1755b7f71672383566a9591348b5af5c658350b..d2e20a03bf031011b64d0ae15c09ab7105e0cffa 100644
 --- a/src/main/java/org/bukkit/craftbukkit/Main.java
 +++ b/src/main/java/org/bukkit/craftbukkit/Main.java
-@@ -172,6 +172,12 @@ public class Main {
+@@ -179,6 +179,12 @@ public class Main {
                      .ofType(File.class)
                      .defaultsTo(new File("purpur.yml"))
                      .describedAs("Yml file");

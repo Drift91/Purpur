@@ -25,7 +25,7 @@ index 721971f7618751a2e95f1c49fdc48a9c0c672cab..7b141c495095afcd9c8b04c059d692e8
              double d = this.llama.distanceToSqr(this.llama.getCaravanHead());
              if (d > 676.0D) {
 diff --git a/src/main/java/net/minecraft/world/entity/animal/horse/Llama.java b/src/main/java/net/minecraft/world/entity/animal/horse/Llama.java
-index 3de18e1389559678b229a334fb98946810c3f214..35fb0f92a94d141c98b3cd8927c76c35a921e04e 100644
+index 9953f80e924e8843ceebdbfa675c2315bf6cf63f..2343accfb669e38635eab949ff04a3f729ac3992 100644
 --- a/src/main/java/net/minecraft/world/entity/animal/horse/Llama.java
 +++ b/src/main/java/net/minecraft/world/entity/animal/horse/Llama.java
 @@ -73,6 +73,7 @@ public class Llama extends AbstractChestedHorse implements VariantHolder<Llama.V
