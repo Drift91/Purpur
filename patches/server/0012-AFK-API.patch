@@ -3,12 +3,13 @@ From: William Blake Galbreath <blake.galbreath@gmail.com>
 Date: Thu, 8 Aug 2019 15:29:15 -0500
 Subject: [PATCH] AFK API
 
+Adds the option for display names to be used in the afk broadcast
 
 diff --git a/src/main/java/net/minecraft/server/level/ServerPlayer.java b/src/main/java/net/minecraft/server/level/ServerPlayer.java
-index 055915f609d1181bbcfa2ce72e1282ace71cb45c..4e68585de7601f87297977c426a8f4621c8c0860 100644
+index 055915f609d1181bbcfa2ce72e1282ace71cb45c..58d7daf06352713ad6dee2412dc0b9d5e900ddd0 100644
 --- a/src/main/java/net/minecraft/server/level/ServerPlayer.java
 +++ b/src/main/java/net/minecraft/server/level/ServerPlayer.java
-@@ -2071,8 +2071,63 @@ public class ServerPlayer extends Player {
+@@ -2071,8 +2071,68 @@ public class ServerPlayer extends Player {
  
      public void resetLastActionTime() {
          this.lastActionTime = Util.getMillis();
@@ -39,7 +40,12 @@ index 055915f609d1181bbcfa2ce72e1282ace71cb45c..4e68585de7601f87297977c426a8f462
 +
 +        msg = event.getBroadcastMsg();
 +        if (msg != null && !msg.isEmpty()) {
-+            server.getPlayerList().broadcastMiniMessage(String.format(msg, this.getGameProfile().getName()), false);
++            String playerName = this.getGameProfile().getName();
++            if (org.purpurmc.purpur.PurpurConfig.afkBroadcastUseDisplayName) {
++                net.kyori.adventure.text.Component playerDisplayNameComponent = net.kyori.adventure.text.serializer.legacy.LegacyComponentSerializer.legacySection().deserialize(this.getBukkitEntity().getDisplayName());
++                playerName = net.kyori.adventure.text.serializer.plain.PlainTextComponentSerializer.plainText().serialize(playerDisplayNameComponent);
++            }
++            server.getPlayerList().broadcastMiniMessage(String.format(msg, playerName), false);
 +        }
 +
 +        if (this.level.purpurConfig.idleTimeoutUpdateTabList) {
@@ -218,10 +224,10 @@ index 3b959f42d958bf0f426853aee56753d6c455fcdb..d17abb283ea818244df0379d6b57fc63
                  if (range < 0.0D || d < range * range) {
                      return true;
 diff --git a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-index 9986b89ceabc065d96c889bf9a50a4aa093e7300..2506882191e83a3cc03666a56e63c18f7adebb68 100644
+index 39ab19be66530c4792719d2d86b6979cffedcf83..2fd1eb97d70890efe431af32f47db29bdab60aa3 100644
 --- a/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
 +++ b/src/main/java/org/bukkit/craftbukkit/entity/CraftPlayer.java
-@@ -533,10 +533,15 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
+@@ -534,10 +534,15 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
  
      @Override
      public void setPlayerListName(String name) {
@@ -238,7 +244,7 @@ index 9986b89ceabc065d96c889bf9a50a4aa093e7300..2506882191e83a3cc03666a56e63c18f
          for (ServerPlayer player : (List<ServerPlayer>) server.getHandle().players) {
              if (player.getBukkitEntity().canSee(this)) {
                  player.connection.send(new ClientboundPlayerInfoUpdatePacket(ClientboundPlayerInfoUpdatePacket.Action.UPDATE_DISPLAY_NAME, this.getHandle()));
-@@ -3202,5 +3207,20 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
+@@ -3186,5 +3191,20 @@ public class CraftPlayer extends CraftHumanEntity implements Player {
      public boolean usesPurpurClient() {
          return getHandle().purpurClient;
      }
@@ -260,21 +266,23 @@ index 9986b89ceabc065d96c889bf9a50a4aa093e7300..2506882191e83a3cc03666a56e63c18f
      // Purpur end
  }
 diff --git a/src/main/java/org/purpurmc/purpur/PurpurConfig.java b/src/main/java/org/purpurmc/purpur/PurpurConfig.java
-index e6a720f25266d793bec5f644dadacbf45aef23f5..594d041c63f86dbafca756f6f7012b9ab5e385ef 100644
+index e6a720f25266d793bec5f644dadacbf45aef23f5..6b768cff1318b4bcebeed95345f3cfdce05a2c16 100644
 --- a/src/main/java/org/purpurmc/purpur/PurpurConfig.java
 +++ b/src/main/java/org/purpurmc/purpur/PurpurConfig.java
-@@ -174,8 +174,16 @@ public class PurpurConfig {
+@@ -174,8 +174,18 @@ public class PurpurConfig {
      }
  
      public static String cannotRideMob = "<red>You cannot mount that mob";
 +    public static String afkBroadcastAway = "<yellow><italic>%s is now AFK";
 +    public static String afkBroadcastBack = "<yellow><italic>%s is no longer AFK";
++    public static boolean afkBroadcastUseDisplayName = false;
 +    public static String afkTabListPrefix = "[AFK] ";
 +    public static String afkTabListSuffix = "";
      private static void messages() {
          cannotRideMob = getString("settings.messages.cannot-ride-mob", cannotRideMob);
 +        afkBroadcastAway = getString("settings.messages.afk-broadcast-away", afkBroadcastAway);
 +        afkBroadcastBack = getString("settings.messages.afk-broadcast-back", afkBroadcastBack);
++        afkBroadcastUseDisplayName = getBoolean("settings.messages.afk-broadcast-use-display-name", afkBroadcastUseDisplayName);
 +        afkTabListPrefix = MiniMessage.miniMessage().serialize(MiniMessage.miniMessage().deserialize(getString("settings.messages.afk-tab-list-prefix", afkTabListPrefix)));
 +        afkTabListSuffix = MiniMessage.miniMessage().serialize(MiniMessage.miniMessage().deserialize(getString("settings.messages.afk-tab-list-suffix", afkTabListSuffix)));
      }
